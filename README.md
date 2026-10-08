@@ -32,3 +32,11 @@ Palette UI demandee : #dfdcd3 et #2a2926.
 Source : https://github.com/Volko61/GadgetTech
 Revision importee : 24b2a7ec156e6b9e76fddd42235fca424f2177c7.
 Depot independant; verifier les droits amont avant redistribution.
+
+## Travail avec Claude et Codex
+
+Lire [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md),
+[workflow](docs/AGENT_WORKFLOW.md) et [politique Git](docs/GIT_POLICY.md).
+Skills canoniques dans `.agents/skills`, miroirs dans `.claude/skills`.
+Contexte commun : [PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md).
+Plan a cases : [TODO.md](TODO.md).

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Brand System Design"
+  short_description: "Préserve une identité visuelle validée"
+  default_prompt: "Utilise $brand-system-design pour créer ou revoir cette identité visuelle."

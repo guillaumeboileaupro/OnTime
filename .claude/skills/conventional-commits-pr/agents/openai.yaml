@@ -1,0 +1,4 @@
+interface:
+  display_name: "Conventional Commits et PR"
+  short_description: "Prépare des commits et des pull requests propres"
+  default_prompt: "Applique Conventional Commits 1.0.0 et prépare une pull request claire pour ces changements."

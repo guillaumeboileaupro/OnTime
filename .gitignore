@@ -14,3 +14,12 @@ local.properties
 # IDE
 .idea/
 *.iml
+
+# Private proofs and generated artifacts
+.ai-private/
+**/__pycache__/
+*.pyc
+Simulateur/simulateur
+Simulateur/ecran.bmp
+
+ProchainMetro/src/api/cle.h
