@@ -1,17 +1,22 @@
 # Interface Android e-paper
 
 Palette choisie d'apres l'image de reference : deux tons chauds.
-Les valeurs ci-dessous sont des approximations visuelles stabilisees pour l'application.
+Valeurs exactes imposees pour le logo, l'application et le widget.
 
 | Role | Couleur | Valeur |
 | --- | --- | --- |
-| Fond, surfaces et espace negatif | Blanc casse chaud | #E7E6DC |
-| Logo, texte, icones et traits | Noir charbon chaud | #242420 |
+| Fond, surfaces et espace negatif | Blanc casse chaud | #dfdcd3 |
+| Logo, texte, icones et traits | Noir charbon chaud | #2a2926 |
 
 Appliquer cette palette au logo, a l'application et au widget. Ne pas ajouter
 de couleur d'accent ni activer les couleurs dynamiques Android. Montrer les
 alertes par texte, pictogramme et inversion des deux tons. Aucun cadre autour
-du logo. Le symbole conserve les aiguilles et la fleche, sans cercle exterieur.
+du logo. Le symbole conserve le cercle au trace fin et exactement deux aiguilles :
+une courte vers le haut a gauche, une longue prolongee en fleche vers le haut a droite.
+Aucune troisieme aiguille. Le nom s'ecrit exactement OnTime, sans espace.
+Conserver la direction typographique sans-serif geometrique fine du logo pour l'UI.
+La police du rendu genere n'est pas un fichier de police identifie; choisir et
+verifier une famille installable visuellement equivalente avant implementation.
 
 Le style e-paper est une identite visuelle; aucun ecran physique n'est necessaire.
 
