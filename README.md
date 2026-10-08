@@ -1,39 +1,34 @@
 # OnTime
 
-Application Android de prochains departs SNCF, RER, metro et tramway, avec
-widget d'accueil et notifications pour partir de chez soi.
+Projet d'application Android de prochains departs SNCF, RER, metro et tramway,
+avec widget, rappels de depart et identite visuelle e-paper.
 
-L'interface conserve le style e-paper : blanc/noir, pastilles de ligne,
-grands chiffres contours et traits fins.
+![Logo OnTime](assets/branding/ontime-logo.png)
 
-## Etat du projet
+## Code source et nettoyage
 
-Le depot contient le cadrage, l'audit amont et les skills de developpement.
-Le firmware ESP32, les bibliotheques Arduino, les outils de televersement,
-le simulateur, l'ecran USB et les tests C++ ont ete retires.
-L'application Android, le widget et les notifications ne sont pas encore implementes.
-Aucune commande de build ni APK n'est disponible a ce stade.
+Le code GadgetTech importe est restaure : ProchainMetro, Simulateur,
+EcranVirtuel, Outils, HelloWorld et tests. Il constitue la base a analyser et
+refactoriser, pas la cible produit finale. Ne plus le supprimer en bloc.
+L'application Android reste a implementer.
 
-## Documentation
+Premiere passe : separer la logique transport/calcul des dependances Arduino,
+conserver le comportement utile et les tests, puis porter vers Kotlin.
+Voir [plan](docs/ANALYSE_ET_PLAN.md) et [audit amont](docs/AUDIT_AMONT.md).
 
-- [Plan Android et architecture](docs/ANALYSE_ET_PLAN.md)
-- [Style e-paper](docs/UI_EINK.md)
-- [Audit historique de GadgetTech](docs/AUDIT_AMONT.md)
-- [Regles des agents](AGENTS.md)
-- Skills de projet : `.agents/skills/transport-data`, `android-departures`, `eink-ui`.
+## Logo
 
-## Origine
+Le PNG fourni est conserve sans modification. Le SVG contient ce meme PNG
+integre, sans changement de traces, police, couleurs, cadrage ou proportions.
+Il s'agit d'un conteneur SVG fidele, pas d'une vectorisation en courbes.
+La version redessinee precedente n'est plus le logo du projet.
+La police du PNG n'est pas identifiee : ne pas la remplacer par DejaVu Sans
+et ne pas annoncer une police UI equivalente comme identique.
 
-Inspiration visuelle et analyse de [Volko61/GadgetTech](https://github.com/Volko61/GadgetTech),
-revision `24b2a7ec156e6b9e76fddd42235fca424f2177c7`.
-OnTime est un depot independant. Aucun code ou police embarquee du projet
-materiel n'est conserve dans la version actuelle. Verifier les droits avant
-reutilisation future d'un asset amont; aucune licence amont n'a ete trouvee.
+Palette UI demandee : #dfdcd3 et #2a2926.
 
-## Logo et identite visuelle
+## Provenance
 
-![Logo OnTime](assets/branding/ontime-logo.svg)
-
-Logo SVG : `assets/branding/ontime-logo.svg`. Symbole pour l'icone Android :
-`assets/branding/ontime-icon.svg`. Deux couleurs : `#dfdcd3` et `#2a2926`.
-Police pour l'UI : `assets/fonts/DejaVuSans-Latin.ttf` (licence fournie).
+Source : https://github.com/Volko61/GadgetTech
+Revision importee : 24b2a7ec156e6b9e76fddd42235fca424f2177c7.
+Depot independant; verifier les droits amont avant redistribution.

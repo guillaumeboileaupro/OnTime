@@ -1,21 +1,16 @@
 # OnTime
 
-Cible unique : application Android avec widget et notifications de depart.
-Conserver le style e-paper comme identite visuelle logicielle.
+Objectif final : application Android, widget et notifications, style e-paper.
+Le code GadgetTech importe doit etre conserve et nettoye progressivement.
+Ne pas supprimer en bloc le firmware, le simulateur ou les outils de reference.
 
-Lire docs/ANALYSE_ET_PLAN.md et docs/UI_EINK.md avant implementation.
-L'audit amont est historique; ne pas suivre ses propositions de maintenance ESP32.
-Charger les skills dans .agents/skills selon la tache.
-
-- Ne pas ajouter firmware, Arduino, GPIO, USB-serie, simulateur materiel ou cible ESP32.
-- Utiliser Kotlin, Compose et Glance; partager le domaine et le repository.
-- Distinguer implementations presentes et architecture proposee.
-- Ne jamais inventer un passage, une voie, un retard ou une suppression.
-- Conserver source, horodatage, identifiants qualifies et qualite des horaires.
-- Ne pas appliquer les conversions STIF aux autres fournisseurs.
-- Ne pas embarquer de cle partagee dans l'APK ou dans les fichiers suivis.
-- Garder la verification TLS active.
-- Tester minuit, DST, panne, suppression, doublons, cache perime et permissions.
-- Verifier contraintes Android et API officielles au moment de l'implementation.
-- Aucun APK, widget, fournisseur ou build Gradle n'existe encore.
-- Ne pas annoncer un test Android reussi sans compilation et execution.
+- Lire docs/ANALYSE_ET_PLAN.md et docs/AUDIT_AMONT.md.
+- Separer domaine transport, fournisseurs, rendu et dependances materielles.
+- Ne pas presenter les dossiers Arduino comme une application Android existante.
+- Conserver tests et provenance; extraire les invariants avant portage Kotlin.
+- Ne jamais inventer de passage; garder source, qualite et horodatage.
+- Garder les identifiants qualifies; ne pas appliquer STIF aux autres fournisseurs.
+- Ne pas embarquer de secret partage ni desactiver TLS.
+- Logo fourni : aucune modification sans demande explicite; PNG original et SVG
+  avec PNG integre sont les references. Ne pas redessiner ni substituer la police.
+- Cible produit Android uniquement; materiel conserve comme source de reference.
