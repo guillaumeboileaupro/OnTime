@@ -1,1 +1,16 @@
-ProchainMetro/src/api/cle.h
+# Android / Gradle
+.gradle/
+.kotlin/
+**/build/
+local.properties
+*.apk
+*.aab
+*.jks
+*.keystore
+# Local secrets
+.env
+.env.*
+!.env.example
+# IDE
+.idea/
+*.iml

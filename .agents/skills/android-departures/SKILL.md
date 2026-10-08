@@ -4,6 +4,7 @@ description: Developper l'application Android GadgetTech, son widget natif et se
 ---
 
 Lire docs/ANALYSE_ET_PLAN.md. Verifier les contraintes Android officielles actuelles.
+Ne pas ajouter de firmware ou de couche materielle.
 1. Utiliser Kotlin et un domaine sans dependance Android; injecter horloge et fournisseurs.
 2. Partager un repository et un snapshot avec l'application, le widget et les rappels.
 3. Persister profils, preferences et rappels; separer credentials et cache.

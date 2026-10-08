@@ -1,21 +1,21 @@
 # OnTime
 
-Objectif : afficheur SNCF, RER, metro et tramway, puis application Android,
-widget natif et rappels de depart. Conserver le style e-paper noir et blanc.
+Cible unique : application Android avec widget et notifications de depart.
+Conserver le style e-paper comme identite visuelle logicielle.
 
-Lire docs/ANALYSE_ET_PLAN.md avant de modifier les interfaces.
-Charger les skills de .agents/skills selon la tache.
+Lire docs/ANALYSE_ET_PLAN.md et docs/UI_EINK.md avant implementation.
+L'audit amont est historique; ne pas suivre ses propositions de maintenance ESP32.
+Charger les skills dans .agents/skills selon la tache.
 
-- Distinguer code existant, modifications testees et architecture proposee.
+- Ne pas ajouter firmware, Arduino, GPIO, USB-serie, simulateur materiel ou cible ESP32.
+- Utiliser Kotlin, Compose et Glance; partager le domaine et le repository.
+- Distinguer implementations presentes et architecture proposee.
 - Ne jamais inventer un passage, une voie, un retard ou une suppression.
 - Conserver source, horodatage, identifiants qualifies et qualite des horaires.
-- Ne pas transporter les conversions STIF vers SNCF ou un autre reseau.
-- Ne pas incorporer de cle partagee dans une APK ou un fichier suivi.
-- Ne pas desactiver TLS pour contourner un probleme reseau.
-- Tester les cas metier : minuit, DST, panne, suppression, doublons, permission refusee.
-- Conserver le firmware et son simulateur lors de l'ajout Android.
-- Aucun APK, widget ou fournisseur national n'est implemente a ce stade.
-- Verifier la licence amont avant redistribution publique du code adapte.
-
-Verification du noyau, depuis la racine :
-`g++ -std=c++11 -Wall -Wextra -Werror -pedantic tests/departure_policy_test.cpp -o /tmp/gadgettech-policy-test && /tmp/gadgettech-policy-test`
+- Ne pas appliquer les conversions STIF aux autres fournisseurs.
+- Ne pas embarquer de cle partagee dans l'APK ou dans les fichiers suivis.
+- Garder la verification TLS active.
+- Tester minuit, DST, panne, suppression, doublons, cache perime et permissions.
+- Verifier contraintes Android et API officielles au moment de l'implementation.
+- Aucun APK, widget, fournisseur ou build Gradle n'existe encore.
+- Ne pas annoncer un test Android reussi sans compilation et execution.

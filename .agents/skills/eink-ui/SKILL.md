@@ -1,9 +1,9 @@
 ---
 name: eink-ui
-description: Conserver le style e-paper GadgetTech dans le firmware, Android et le widget. Utiliser pour composition, typographie, etats de donnees et accessibilite.
+description: Conserver le style e-paper GadgetTech dans l'application Android et le widget. Utiliser pour composition, typographie, etats de donnees et accessibilite.
 ---
 
-Prendre le rendu de ProchainMetro/src/ecran comme reference.
+Lire docs/UI_EINK.md. Conserver le style e-paper comme identite logicielle sans cible materielle.
 - Garder fond blanc, texte noir, pastille de ligne, grands chiffres contours et traits fins.
 - Donner priorite a quand partir, mode/ligne, destination, heure du transport et fraicheur.
 - Afficher SNCF/RER/METRO/TRAM sans dependre de la couleur; garder les accents sur Android.
