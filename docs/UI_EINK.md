@@ -15,8 +15,11 @@ du logo. Le symbole conserve le cercle au trace fin et exactement deux aiguilles
 une courte vers le haut a gauche, une longue prolongee en fleche vers le haut a droite.
 Aucune troisieme aiguille. Le nom s'ecrit exactement OnTime, sans espace.
 Conserver la direction typographique sans-serif geometrique fine du logo pour l'UI.
-La police du rendu genere n'est pas un fichier de police identifie; choisir et
-verifier une famille installable visuellement equivalente avant implementation.
+Le SVG maitre est assets/branding/ontime-logo.svg; le symbole seul est
+assets/branding/ontime-icon.svg. Le texte est vectorise pour un rendu stable.
+La police vectorielle choisie est DejaVu Sans Regular, fournie pour l'UI dans
+assets/fonts/DejaVuSans-Latin.ttf avec sa licence. Ce choix reproductible
+approche le rendu genere sans pretendre identifier sa police originale.
 
 Le style e-paper est une identite visuelle; aucun ecran physique n'est necessaire.
 

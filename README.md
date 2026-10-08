@@ -29,3 +29,11 @@ revision `24b2a7ec156e6b9e76fddd42235fca424f2177c7`.
 OnTime est un depot independant. Aucun code ou police embarquee du projet
 materiel n'est conserve dans la version actuelle. Verifier les droits avant
 reutilisation future d'un asset amont; aucune licence amont n'a ete trouvee.
+
+## Logo et identite visuelle
+
+![Logo OnTime](assets/branding/ontime-logo.svg)
+
+Logo SVG : `assets/branding/ontime-logo.svg`. Symbole pour l'icone Android :
+`assets/branding/ontime-icon.svg`. Deux couleurs : `#dfdcd3` et `#2a2926`.
+Police pour l'UI : `assets/fonts/DejaVuSans-Latin.ttf` (licence fournie).
