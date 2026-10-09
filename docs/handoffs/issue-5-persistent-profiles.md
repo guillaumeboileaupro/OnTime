@@ -4,7 +4,7 @@
   humaine ou Claude independante revendiquee.
 - Branche, base et HEAD : `feat/issue-5-persistent-profiles`, dependante de la
   PR #12 au SHA exact `4d9d347ea2884e29cb06ccb1d73c5cd9fc52179b`.
-  Implementation corrigee au SHA `0149b8e`;
+  Implementation corrigee au SHA `8fef580`;
   le commit documentaire qui contient cette passation est le HEAD final reporte
   dans la description de PR.
 - PR et perimetre : `Refs #5`; profils sur fixtures uniquement, aucun merge,
@@ -20,7 +20,8 @@
   modification, suppression et selection; calcul visible du depart maison. Le
   reste de l'ecran continue d'afficher les quatre etats transport de #12.
   Le calcul maison n'est affiche que si la selection est `Available` et si son
-  arret/sa ligne correspondent au profil; aucun horaire n'est synthetise.
+  arret/sa ligne correspondent au profil; un depart deja manque selon la marche
+  et la marge du profil est rejete et aucun horaire n'est synthetise.
   Les valeurs pre-remplies emploient l'identifiant fixture canonique
   `demo:line:a`, identique a celui du depart affiche.
 - Validation : arret, ligne et direction obligatoires; marche 0..180 minutes;
@@ -53,8 +54,9 @@
   SDK et caches globaux restent intacts.
 - Revue : Codex a demande de supprimer le calcul synthetique hors selection
   compatible, de propager les echecs `commit()`, d'utiliser l'identifiant fixture
-  canonique et de distinguer une lecture corrompue d'une liste vide. Les quatre
-  retours sont corriges et testes; une derniere revue vise le HEAD final. Une
+  canonique, de distinguer une lecture corrompue d'une liste vide, de rejeter un
+  depart manque selon le profil et de proteger le type de l'identifiant selectionne.
+  Les six retours sont corriges et testes; une derniere revue vise le HEAD final. Une
   revue independante humaine/Claude reste a faire.
 - Prochaine action : Guillaume valide d'abord la PR #12, puis decide du rebasage
   logique et du merge eventuel de cette PR dependante. Les favoris, donnees
