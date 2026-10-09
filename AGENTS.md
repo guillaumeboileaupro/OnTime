@@ -2,6 +2,8 @@
 
 Lire dans cet ordre : docs/PROJECT_CONTEXT.md, docs/AGENT_WORKFLOW.md, docs/GIT_POLICY.md,
 docs/ANALYSE_ET_PLAN.md, docs/UI_EINK.md et le dernier handoff de la tranche.
+Appliquer .agents/skills/token-efficiency/SKILL.md a chaque tranche : charger le cadrage
+une fois par session, puis seulement les extraits utiles; relire si modification ou perte de contexte.
 Inspecter Git, branche, HEAD, fichiers, PR et CI avant toute affirmation.
 
 ## Roles et coordination

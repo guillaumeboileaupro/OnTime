@@ -1,0 +1,4 @@
+interface:
+  display_name: "Economie de tokens"
+  short_description: "Limiter le contexte et les repetitions inutiles"
+  default_prompt: "Utilise $token-efficiency pour realiser cette tranche avec un contexte cible et des preuves reutilisables."

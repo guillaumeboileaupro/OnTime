@@ -2,6 +2,8 @@
 
 Appliquer AGENTS.md, docs/AGENT_WORKFLOW.md et docs/GIT_POLICY.md. Lire docs/PROJECT_CONTEXT.md,
 le plan, les decisions et le dernier handoff avant reprise.
+Appliquer .claude/skills/token-efficiency/SKILL.md : lire le cadrage une fois par session,
+puis les extraits utiles; relire si modification ou perte de contexte.
 
 - Auditer l'etat reel et la coherence des documents avant de proposer UNE tranche.
 - Respecter le perimetre deja autorise par Guillaume; demander les choix manquants
