@@ -160,7 +160,7 @@ private fun DemoDeparturesScreen(profileRepository: fr.ontime.domain.ProfileRepo
             }
         }
         SelectionPanel(selection)
-        ProfileSection(profileRepository, DemoClock)
+        ProfileSection(profileRepository, DemoClock, selection)
         Text(
             text = "Source : fixtures locales • aucune API ni donnée temps réel",
             color = Ink,

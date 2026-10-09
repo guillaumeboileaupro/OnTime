@@ -2,6 +2,7 @@ package fr.ontime.app.data
 
 import android.content.Context
 import fr.ontime.domain.ProfileChange
+import fr.ontime.domain.ProfileCommandResult
 import fr.ontime.domain.ProfileDraft
 import fr.ontime.domain.ProfileRepository
 import fr.ontime.domain.TravelProfile
@@ -30,8 +31,11 @@ class SharedPreferencesProfileRepository(
         val result = draft.toProfile(idFactory())
         if (result !is ProfileChange.Success) return result
         val updated = readProfiles() + result.profile
-        write(updated, selectedProfileId() ?: result.profile.id)
-        return result
+        return if (write(updated, selectedProfileId() ?: result.profile.id)) {
+            result
+        } else {
+            ProfileChange.StorageError
+        }
     }
 
     @Synchronized
@@ -40,25 +44,34 @@ class SharedPreferencesProfileRepository(
         if (current.none { it.id == id }) return ProfileChange.NotFound
         val result = draft.toProfile(id)
         if (result !is ProfileChange.Success) return result
-        write(current.map { if (it.id == id) result.profile else it }, selectedProfileId())
-        return result
+        return if (write(current.map { if (it.id == id) result.profile else it }, selectedProfileId())) {
+            result
+        } else {
+            ProfileChange.StorageError
+        }
     }
 
     @Synchronized
-    override fun delete(id: String): Boolean {
+    override fun delete(id: String): ProfileCommandResult {
         val current = readProfiles()
-        if (current.none { it.id == id }) return false
+        if (current.none { it.id == id }) return ProfileCommandResult.NotFound
         val remaining = current.filterNot { it.id == id }
         val selected = selectedProfileId().takeUnless { it == id } ?: remaining.firstOrNull()?.id
-        write(remaining, selected)
-        return true
+        return if (write(remaining, selected)) {
+            ProfileCommandResult.Success
+        } else {
+            ProfileCommandResult.StorageError
+        }
     }
 
     @Synchronized
-    override fun select(id: String): Boolean {
-        if (readProfiles().none { it.id == id }) return false
-        preferences.edit().putString(KEY_SELECTED, id).commit()
-        return true
+    override fun select(id: String): ProfileCommandResult {
+        if (readProfiles().none { it.id == id }) return ProfileCommandResult.NotFound
+        return if (preferences.edit().putString(KEY_SELECTED, id).commit()) {
+            ProfileCommandResult.Success
+        } else {
+            ProfileCommandResult.StorageError
+        }
     }
 
     private fun readProfiles(): List<TravelProfile> = runCatching {
@@ -80,7 +93,7 @@ class SharedPreferencesProfileRepository(
         }
     }.getOrDefault(emptyList())
 
-    private fun write(profiles: List<TravelProfile>, selectedId: String?) {
+    private fun write(profiles: List<TravelProfile>, selectedId: String?): Boolean {
         val array = JSONArray()
         profiles.forEach { profile ->
             array.put(
@@ -93,7 +106,7 @@ class SharedPreferencesProfileRepository(
                     .put("marginMinutes", profile.marginMinutes),
             )
         }
-        preferences.edit()
+        return preferences.edit()
             .putString(KEY_PROFILES, array.toString())
             .apply { if (selectedId == null) remove(KEY_SELECTED) else putString(KEY_SELECTED, selectedId) }
             .commit()

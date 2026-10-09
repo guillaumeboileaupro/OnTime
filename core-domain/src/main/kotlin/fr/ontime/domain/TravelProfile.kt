@@ -27,15 +27,18 @@ sealed interface ProfileChange {
     data class Success(val profile: TravelProfile) : ProfileChange
     data class Invalid(val errors: Set<ProfileError>) : ProfileChange
     data object NotFound : ProfileChange
+    data object StorageError : ProfileChange
 }
+
+enum class ProfileCommandResult { Success, NotFound, StorageError }
 
 interface ProfileRepository {
     fun profiles(): List<TravelProfile>
     fun selectedProfileId(): String?
     fun create(draft: ProfileDraft): ProfileChange
     fun update(id: String, draft: ProfileDraft): ProfileChange
-    fun delete(id: String): Boolean
-    fun select(id: String): Boolean
+    fun delete(id: String): ProfileCommandResult
+    fun select(id: String): ProfileCommandResult
 }
 
 fun ProfileDraft.validationErrors(): Set<ProfileError> = buildSet {

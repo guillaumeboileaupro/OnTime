@@ -14,6 +14,8 @@ Le module Kotlin/JVM pur definit `TravelProfile`, `ProfileDraft`, la validation,
 `ProfileRepository` et `HomeDepartureCalculator`. La marche doit etre comprise
 entre 0 et 180 minutes, la marge entre 0 et 60 minutes; arret, ligne et direction
 sont obligatoires. Une mutation invalide ne modifie pas la persistance.
+Un echec d'ecriture est retourne comme `StorageError` et n'est jamais presente
+comme une sauvegarde reussie.
 
 Le depart de chez soi est calcule ainsi :
 
@@ -22,8 +24,9 @@ departMaison = departTransport - marche - marge
 ```
 
 Le calcul recoit une `Clock` et retourne aussi la duree entre l'instant courant
-injecte et le depart maison. L'interface ne recalcule pas une course transport
-qui n'existe pas.
+injecte et le depart maison. L'interface ne l'affiche que pour une selection
+`Available` dont l'arret et la ligne correspondent au profil; elle ne fabrique
+aucune course pour `Empty`, `Stale` ou `Error`.
 
 ## Persistance et confidentialite
 

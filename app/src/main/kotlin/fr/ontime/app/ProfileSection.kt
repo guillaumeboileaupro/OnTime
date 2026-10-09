@@ -22,8 +22,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import fr.ontime.domain.HomeDepartureCalculator
 import fr.ontime.domain.ProfileChange
+import fr.ontime.domain.ProfileCommandResult
 import fr.ontime.domain.ProfileDraft
 import fr.ontime.domain.ProfileRepository
+import fr.ontime.domain.Selection
+import fr.ontime.domain.Status
 import fr.ontime.domain.TravelProfile
 import java.time.Clock
 import java.time.ZoneId
@@ -33,7 +36,7 @@ private val ProfilePaper = Color(0xFFDFDCD3)
 private val ProfileInk = Color(0xFF2A2926)
 
 @Composable
-fun ProfileSection(repository: ProfileRepository, clock: Clock) {
+fun ProfileSection(repository: ProfileRepository, clock: Clock, selection: Selection) {
     var revision by remember { mutableIntStateOf(0) }
     val profiles = remember(revision) { repository.profiles() }
     val selectedId = remember(revision) { repository.selectedProfileId() }
@@ -76,10 +79,15 @@ fun ProfileSection(repository: ProfileRepository, clock: Clock) {
             val selected = profile.id == selectedId
             OutlinedButton(
                 onClick = {
-                    repository.select(profile.id)
-                    load(profile)
-                    message = "Profil sélectionné"
-                    refresh()
+                    message = when (repository.select(profile.id)) {
+                        ProfileCommandResult.Success -> {
+                            load(profile)
+                            refresh()
+                            "Profil sélectionné"
+                        }
+                        ProfileCommandResult.NotFound -> "Profil introuvable"
+                        ProfileCommandResult.StorageError -> "Erreur de stockage"
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -91,14 +99,19 @@ fun ProfileSection(repository: ProfileRepository, clock: Clock) {
         }
         selectedId?.let { id ->
             profiles.firstOrNull { it.id == id }?.let { profile ->
-                val leave = HomeDepartureCalculator(clock).calculate(
-                    clock.instant().plusSeconds(12 * 60),
-                    profile,
-                )
-                val formatted = DateTimeFormatter.ofPattern("HH:mm")
-                    .withZone(ZoneId.of("Europe/Paris"))
-                    .format(leave.leaveAt)
-                Text("Départ de chez soi : $formatted (fixture)", color = ProfileInk)
+                val departure = selection.departure?.takeIf {
+                    selection.status == Status.Available &&
+                        it.stopId == profile.stopId && it.lineId == profile.lineId
+                }
+                if (departure == null) {
+                    Text("Aucun départ fixture compatible à calculer.", color = ProfileInk)
+                } else {
+                    val leave = HomeDepartureCalculator(clock).calculate(departure.departureAt, profile)
+                    val formatted = DateTimeFormatter.ofPattern("HH:mm")
+                        .withZone(ZoneId.of("Europe/Paris"))
+                        .format(leave.leaveAt)
+                    Text("Départ de chez soi : $formatted (fixture)", color = ProfileInk)
+                }
             }
         }
         ProfileField("Arrêt", stop) { stop = it }
@@ -116,12 +129,18 @@ fun ProfileSection(repository: ProfileRepository, clock: Clock) {
                     message = when (result) {
                         is ProfileChange.Success -> {
                             editingId = result.profile.id
-                            repository.select(result.profile.id)
-                            refresh()
-                            "Profil enregistré"
+                            when (repository.select(result.profile.id)) {
+                                ProfileCommandResult.Success -> {
+                                    refresh()
+                                    "Profil enregistré"
+                                }
+                                ProfileCommandResult.NotFound -> "Profil enregistré mais introuvable"
+                                ProfileCommandResult.StorageError -> "Profil enregistré, sélection non persistée"
+                            }
                         }
                         is ProfileChange.Invalid -> "Paramètres invalides : ${result.errors.joinToString()}"
                         ProfileChange.NotFound -> "Profil introuvable"
+                        ProfileChange.StorageError -> "Erreur de stockage"
                     }
                 },
                 colors = ButtonDefaults.buttonColors(ProfileInk, ProfilePaper),
@@ -132,10 +151,15 @@ fun ProfileSection(repository: ProfileRepository, clock: Clock) {
             }) { Text("Nouveau", color = ProfileInk) }
             editingId?.let { id ->
                 OutlinedButton(onClick = {
-                    repository.delete(id)
-                    editingId = null
-                    message = "Profil supprimé"
-                    refresh()
+                    message = when (repository.delete(id)) {
+                        ProfileCommandResult.Success -> {
+                            editingId = null
+                            refresh()
+                            "Profil supprimé"
+                        }
+                        ProfileCommandResult.NotFound -> "Profil introuvable"
+                        ProfileCommandResult.StorageError -> "Erreur de stockage"
+                    }
                 }) { Text("Supprimer", color = ProfileInk) }
             }
         }

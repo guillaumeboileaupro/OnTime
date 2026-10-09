@@ -12,10 +12,12 @@
 - Adaptateur Android : `SharedPreferencesProfileRepository` implemente CRUD,
   selection et conservation lors de la recreation du repository. Les ecritures
   utilisent `commit` pour que chaque operation retournee comme reussie soit deja
-  persistante.
+  persistante; un echec est propage comme `StorageError`.
 - Interface : section explicitement marquee fixtures locales; creation,
   modification, suppression et selection; calcul visible du depart maison. Le
   reste de l'ecran continue d'afficher les quatre etats transport de #12.
+  Le calcul maison n'est affiche que si la selection est `Available` et si son
+  arret/sa ligne correspondent au profil; aucun horaire n'est synthetise.
 - Validation : arret, ligne et direction obligatoires; marche 0..180 minutes;
   marge 0..60 minutes. Une valeur non numerique devient invalide. La suppression
   du profil selectionne choisit le premier restant, sinon aucun.
@@ -35,8 +37,10 @@
   `core-domain/build` 1.9M, `.gradle` 1.9M), 174G disponibles. Les builds locaux
   regenerables seront supprimes avant passation finale; SDK et caches globaux
   restent intacts.
-- Revue : une revue Codex doit viser le HEAD final et tous ses retours doivent
-  etre traites. Une revue independante humaine/Claude restera a faire.
+- Revue : la premiere revue Codex a demande de supprimer le calcul synthetique
+  hors selection compatible et de propager les echecs `commit()`. Les deux
+  retours sont corriges et testes; une confirmation doit viser le HEAD final.
+  Une revue independante humaine/Claude restera a faire.
 - Prochaine action : valider CI/revue, puis Guillaume decide du merge de #12 et
   du rebasage logique de cette PR dependante. Les favoris et donnees reelles
   restent une tranche separee.
