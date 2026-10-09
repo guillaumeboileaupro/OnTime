@@ -35,6 +35,9 @@ jobs:
             git show --check --format= "$HEAD_SHA"
           fi
       - name: Run portable C++ tests
+        env:
+          # The parser result must not depend on the runner's local timezone.
+          TZ: Pacific/Honolulu
         run: tests/run_cpp_tests.sh
 
   sanitizers:
@@ -44,14 +47,19 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
       - name: Build sanitizer test binary
-        run: >-
-          c++ -std=c++11 -Wall -Wextra -Werror -pedantic
-          -fsanitize=address,undefined -fno-omit-frame-pointer
-          tests/departure_policy_test.cpp -o /tmp/ontime-departure-policy-sanitized
+        run: |
+          common_flags="-std=c++11 -Wall -Wextra -Werror -pedantic -fsanitize=address,undefined -fno-omit-frame-pointer"
+          c++ $common_flags tests/departure_policy_test.cpp \
+            -o /tmp/ontime-departure-policy-sanitized
+          c++ $common_flags tests/datetime_parser_test.cpp \
+            ProchainMetro/src/transport/datetime_parser.cpp \
+            -o /tmp/ontime-datetime-parser-sanitized
       # LeakSanitizer is disabled to match supervised local runs; address and
       # undefined-behavior checks remain fatal and run in a distinct job.
       - name: Run sanitizer tests
         env:
           ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
-        run: /tmp/ontime-departure-policy-sanitized
+        run: |
+          /tmp/ontime-departure-policy-sanitized
+          /tmp/ontime-datetime-parser-sanitized
