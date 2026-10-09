@@ -15,6 +15,8 @@ L'application Android reste a implementer.
 Premiere passe : separer la logique transport/calcul des dependances Arduino,
 conserver le comportement utile et les tests, puis porter vers Kotlin.
 Voir [plan](docs/ANALYSE_ET_PLAN.md) et [audit amont](docs/AUDIT_AMONT.md).
+L'[audit cible de l'issue #1](docs/AUDIT_ISSUE_1.md) cartographie les frontieres
+actuelles et le plan des extractions progressives.
 
 ## Logo
 
