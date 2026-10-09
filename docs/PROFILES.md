@@ -14,8 +14,9 @@ Le module Kotlin/JVM pur definit `TravelProfile`, `ProfileDraft`, la validation,
 `ProfileRepository` et `HomeDepartureCalculator`. La marche doit etre comprise
 entre 0 et 180 minutes, la marge entre 0 et 60 minutes; arret, ligne et direction
 sont obligatoires. Une mutation invalide ne modifie pas la persistance.
-Un echec d'ecriture est retourne comme `StorageError` et n'est jamais presente
-comme une sauvegarde reussie.
+Un echec d'ecriture ou de lecture est retourne comme `StorageError` et n'est
+jamais presente comme une sauvegarde reussie ou une liste vide. Un stockage JSON
+malforme n'est pas ecrase par une creation ulterieure.
 
 Le depart de chez soi est calcule ainsi :
 
@@ -33,10 +34,13 @@ aucune course pour `Empty`, `Stale` ou `Error`.
 `SharedPreferencesProfileRepository` est l'adaptateur Android. Il conserve la
 liste et l'identifiant selectionne dans le stockage prive de l'application. Une
 suppression selectionne le premier profil restant, ou aucun si la liste devient
-vide. Cette premiere persistance n'est ni chiffree ni synchronisee : ne pas y
+vide. Le formulaire de demonstration utilise les identifiants canoniques de ses
+fixtures (`demo:stop:central` et `demo:line:a`). Cette premiere persistance n'est
+ni chiffree ni synchronisee : ne pas y
 saisir de secret, d'adresse personnelle ou de trajet reel sensible.
 
 Le test instrumente recree le repository sur le meme stockage pour verifier la
-conservation, puis couvre modification, selection et suppression. Un test sur
+conservation, puis couvre modification, selection, suppression et stockage
+malforme. Un test sur
 emulateur ne remplace pas une observation apres arret force ou redemarrage d'un
 OPPO reel.
