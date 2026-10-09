@@ -35,6 +35,15 @@
   [37922895644](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37922895644)
   reussi, y compris tests, assemblage et upload de l'artefact APK debug. La CI
   finale apres cette passation est a reporter dans la description de PR.
+- Validation complementaire #12 au SHA
+  `6886bf480bf6b635f03081c74062359ce2fc25b4` : run Android
+  [37927587544](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37927587544)
+  reussi. Le job APK publie `ontime-debug-6886bf480bf6b635f03081c74062359ce2fc25b4`,
+  qui identifie exactement le commit checkout et construit. Le job emulateur
+  Android 15 reussit le lancement de l'activite et le controle des quatre etats.
+  Le run C++ associe
+  [37927587517](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37927587517)
+  est egalement reussi.
 - Validation ajoutee : un test instrumente lance `MainActivity` sur emulateur
   Android 15, verifie l'absence de crash au demarrage, puis affiche et controle
   `Available`, `Empty`, `Stale` et `Error`. Le workflow checkout explicitement
@@ -62,6 +71,6 @@
   widget, notification ou integration materielle. Les transitions de Paris
   restent modelisees par offsets explicites, pas par validation d'une zone IANA.
 - Prochaine action : faire la revue independante de #12, installer l'artefact
-  sur un appareil/emulateur documente, puis attendre la decision de Guillaume.
+  sur un OPPO documente, puis attendre la decision de Guillaume.
   Les fournisseurs reels, le widget et les notifications restent des tranches
   separees.
