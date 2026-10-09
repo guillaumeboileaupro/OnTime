@@ -15,7 +15,7 @@ fun selectNextDeparture(
         return Selection(sourceStatus)
     }
     if (sourceStatus == Status.Empty) return Selection(Status.Empty)
-    if (walking.isNegative || margin.isNegative || maxAge.isNegative) {
+    if (now.isBefore(Instant.EPOCH) || walking.isNegative || margin.isNegative || maxAge.isNegative) {
         return Selection(Status.Error)
     }
 
@@ -43,7 +43,8 @@ fun selectNextDeparture(
 
 private fun Departure.isValid(): Boolean =
     provider.isNotBlank() && journeyId.isNotBlank() && stopId.isNotBlank() &&
-        lineId.isNotBlank() && destination.isNotBlank()
+        lineId.isNotBlank() && destination.isNotBlank() &&
+        !departureAt.isBefore(Instant.EPOCH) && !fetchedAt.isBefore(Instant.EPOCH)
 
 private fun Departure.isRecommendable(
     now: Instant,

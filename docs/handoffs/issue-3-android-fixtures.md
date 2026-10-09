@@ -42,8 +42,10 @@
   identite IA. `git show --format=fuller` et l'API GitHub montrent tous deux
   `guillaumeboileaupro <guillaume.boileaupro@gmail.com>` comme auteur et
   committer. Le retour a ete repondu puis resolu sans reecriture d'historique.
-  Une revue Codex doit etre relancee sur le HEAD final; elle ne constitue pas
-  une revue humaine/Claude independante.
+  La revue suivante a demande l'usage effectif de `DepartureRepository`, le
+  rejet des instants transport pre-epoque et les insets systeme : ces trois
+  retours ont ete corriges et testes. Une confirmation Codex doit viser le HEAD
+  corrige; elle ne constitue pas une revue humaine/Claude independante.
 - Disque et nettoyage : depot mesure a `87M` avec les preuves de build locales
   (`app/build` 73M, `core-domain/build` 1.7M, `.gradle` 1.5M), disque 465G dont
   174G disponibles. Ces trois repertoires generes sont nettoyes apres collecte

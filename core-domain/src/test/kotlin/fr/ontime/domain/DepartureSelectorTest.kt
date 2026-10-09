@@ -95,6 +95,26 @@ class DepartureSelectorTest {
                 Duration.ZERO, Duration.ZERO, Duration.ofSeconds(120),
             ).status,
         )
+        assertEquals(
+            Status.Error,
+            selectNextDeparture(
+                listOf(departure("invalid-departure", 300).copy(departureAt = Instant.ofEpochSecond(-1))),
+                now, Duration.ZERO, Duration.ZERO, Duration.ofSeconds(120),
+            ).status,
+        )
+        assertEquals(
+            Status.Error,
+            selectNextDeparture(
+                listOf(departure("invalid-fetch", 300).copy(fetchedAt = Instant.ofEpochSecond(-1))),
+                now, Duration.ZERO, Duration.ZERO, Duration.ofSeconds(120),
+            ).status,
+        )
+        assertEquals(
+            Status.Error,
+            selectNextDeparture(
+                emptyList(), Instant.ofEpochSecond(-1), Duration.ZERO, Duration.ZERO, Duration.ZERO,
+            ).status,
+        )
     }
 
     private fun departure(

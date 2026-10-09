@@ -1,6 +1,7 @@
 package fr.ontime.app.data
 
 import fr.ontime.domain.Departure
+import fr.ontime.domain.DepartureRepository
 import fr.ontime.domain.Mode
 import fr.ontime.domain.Quality
 import fr.ontime.domain.Selection
@@ -16,8 +17,11 @@ enum class DemoScenario(val label: String) {
     Error("Error"),
 }
 
-class FixtureDepartureRepository(private val clock: Clock) {
-    fun selection(scenario: DemoScenario): Selection {
+class FixtureDepartureRepository(
+    private val clock: Clock,
+    private val scenario: DemoScenario,
+) : DepartureRepository {
+    override fun currentSelection(): Selection {
         val now = clock.instant()
         return when (scenario) {
             DemoScenario.Available -> selectNextDeparture(
