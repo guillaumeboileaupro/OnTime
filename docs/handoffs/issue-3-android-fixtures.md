@@ -24,20 +24,25 @@
   SHA-256 que `assets/branding/ontime-logo.png` :
   `fed9ce24cb6ec5d8a5b1e2feb783c621df031112486d60bb55e007ac4dc4e020`.
 - Tests locaux : `./gradlew :core-domain:test :app:testDebugUnitTest
-  :app:assembleDebug --no-daemon` reussi (9 tests domaine et 1 test repository
-  de fixtures); `tests/run_cpp_tests.sh` reussi; `bash -n gradlew` et
-  `git diff --check` reussis. APK inspecte localement : paquet `fr.ontime.app`,
-  version `0.1.0-demo`, min SDK 26, target SDK 36.
+  :app:assembleDebug :app:assembleDebugAndroidTest --no-daemon` reussi (9 tests
+  domaine, 1 test repository de fixtures et APK de test instrumente compile);
+  `tests/run_cpp_tests.sh` reussi; parsing YAML et `git diff --check` reussis.
+  APK inspecte localement : paquet `fr.ontime.app`, version `0.1.0-demo`, min
+  SDK 26, target SDK 36.
 - CI prouvee sur l'implementation `7bd97ef4d7903984738550b88181fa8f3f2fd78c` :
   run C++ [37922895684](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37922895684)
   reussi (tests portables et ASan/UBSan); run Android
   [37922895644](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37922895644)
   reussi, y compris tests, assemblage et upload de l'artefact APK debug. La CI
   finale apres cette passation est a reporter dans la description de PR.
-- Verification non obtenue : aucune installation ou observation sur appareil
-  ou emulateur. `adb` ne pouvait pas ouvrir son listener dans le bac a sable;
-  une construction et un artefact ne prouvent donc pas l'installation, le
-  rendu, TalkBack, les grandes polices ou les rotations.
+- Validation ajoutee : un test instrumente lance `MainActivity` sur emulateur
+  Android 15, verifie l'absence de crash au demarrage, puis affiche et controle
+  `Available`, `Empty`, `Stale` et `Error`. Le workflow checkout explicitement
+  le SHA de tete et nomme l'artefact APK avec ce meme SHA construit.
+- Verification non obtenue : `adb devices` ne liste aucun appareil local; aucune
+  installation ou observation sur OPPO n'est donc revendiquee. Le guide Android
+  donne la procedure USB courte. L'emulateur CI ne prouve pas TalkBack, grandes
+  polices, rotations ni comportement constructeur OPPO.
 - Revue Codex : la premiere revue a attribue par erreur le commit initial a une
   identite IA. `git show --format=fuller` et l'API GitHub montrent tous deux
   `guillaumeboileaupro <guillaume.boileaupro@gmail.com>` comme auteur et

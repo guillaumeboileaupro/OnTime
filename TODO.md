@@ -22,7 +22,9 @@
 - [x] Issue #8 : premiere CI C++ portable sur PR et push vers `main`.
 - [x] Issue #8 : tests Android, build APK debug et artefact CI sans signature de
   production.
-- [ ] Issues #3/#8 : installation et observation sur appareil/emulateur.
+- [ ] Issues #3/#8 : lancement instrumente sur emulateur CI (workflow ajoute,
+  preuve finale a reporter).
+- [ ] Issues #3/#8 : installation et observation sur OPPO reel.
 - [ ] Attribution et release autorisee.
 
 Ne cocher qu'avec preuve et reference de commit/PR. Revue/CI/appareil sont des

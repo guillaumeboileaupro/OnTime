@@ -32,8 +32,9 @@ Aucun secret, compte fournisseur ou cle de signature de production n'est requis.
 
 L'APK regenerable est produit sous
 `app/build/outputs/apk/debug/app-debug.apk`. GitHub Actions publie ce fichier
-comme artefact de developpement temporaire. Ce n'est ni une release, ni un APK
-signe avec une cle de production.
+comme artefact de developpement temporaire nomme avec le SHA source effectivement
+checkout et construit. Ce n'est ni une release, ni un APK signe avec une cle de
+production.
 
 ## Installer localement
 
@@ -43,10 +44,22 @@ Avec un appareil ou emulateur autorise visible par `adb devices` :
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Une compilation reussie ou un artefact CI ne prouve pas l'installation. Noter
-separement l'appareil, la version Android et l'observation avant de cocher ce
-critere de l'issue #3/#8. Ne jamais versionner identifiant appareil ou logs
-personnels.
+Sur un OPPO : activer les options developpeur puis le debogage USB, relier le
+telephone, accepter l'empreinte de l'ordinateur et verifier qu'une seule ligne
+est marquee `device` avec `adb devices`. Installer ensuite l'APK avec la commande
+ci-dessus, puis lancer explicitement l'application :
+
+```sh
+adb shell am start -n fr.ontime.app/.MainActivity
+```
+
+Desactiver le debogage USB apres validation si celui-ci n'est plus necessaire.
+Ne pas copier l'identifiant de l'appareil dans une issue, une PR ou un log Git.
+
+La CI lance aussi l'activite sur un emulateur Android 15 et verifie les quatre
+etats de fixtures. Cela ne remplace pas une validation sur OPPO : noter
+separement le modele, la version Android et l'observation, sans versionner
+l'identifiant de l'appareil ni de logs personnels.
 
 ## Identite visuelle et accessibilite
 
@@ -60,6 +73,6 @@ agrandissement de police, orientation, contraste et navigation tactile.
 
 - horloge et donnees figees pour des captures reproductibles ;
 - aucune couverture fournisseur ou temps reel ;
-- aucune installation observee tant qu'un appareil/emulateur n'est pas teste ;
+- lancement et quatre etats verifies sur emulateur CI, mais pas encore sur OPPO ;
 - aucune persistance Room/DataStore introduite sans besoin verifie ;
 - widget, rappels et permissions volontairement hors tranche.
