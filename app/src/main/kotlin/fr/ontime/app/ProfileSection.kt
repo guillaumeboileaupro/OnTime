@@ -25,6 +25,7 @@ import fr.ontime.domain.ProfileChange
 import fr.ontime.domain.ProfileCommandResult
 import fr.ontime.domain.ProfileDraft
 import fr.ontime.domain.ProfileRepository
+import fr.ontime.domain.ProfileSnapshot
 import fr.ontime.domain.Selection
 import fr.ontime.domain.Status
 import fr.ontime.domain.TravelProfile
@@ -38,11 +39,12 @@ private val ProfileInk = Color(0xFF2A2926)
 @Composable
 fun ProfileSection(repository: ProfileRepository, clock: Clock, selection: Selection) {
     var revision by remember { mutableIntStateOf(0) }
-    val profiles = remember(revision) { repository.profiles() }
-    val selectedId = remember(revision) { repository.selectedProfileId() }
+    val snapshot = remember(revision) { repository.snapshot() }
+    val profiles = (snapshot as? ProfileSnapshot.Data)?.profiles.orEmpty()
+    val selectedId = (snapshot as? ProfileSnapshot.Data)?.selectedProfileId
     var editingId by remember { mutableStateOf<String?>(null) }
     var stop by remember { mutableStateOf("demo:stop:central") }
-    var line by remember { mutableStateOf("A") }
+    var line by remember { mutableStateOf("demo:line:a") }
     var direction by remember { mutableStateOf("Direction de démonstration") }
     var walking by remember { mutableStateOf("7") }
     var margin by remember { mutableStateOf("2") }
@@ -75,6 +77,9 @@ fun ProfileSection(repository: ProfileRepository, clock: Clock, selection: Selec
     ) {
         Text("PROFILS — FIXTURES LOCALES", color = ProfileInk)
         Text("Persistés sur cet appareil, sans API réelle.", color = ProfileInk)
+        if (snapshot == ProfileSnapshot.StorageError) {
+            Text("Erreur de lecture du stockage des profils.", color = ProfileInk)
+        }
         profiles.forEach { profile ->
             val selected = profile.id == selectedId
             OutlinedButton(

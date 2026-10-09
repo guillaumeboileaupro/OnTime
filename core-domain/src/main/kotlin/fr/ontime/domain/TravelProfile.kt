@@ -32,9 +32,13 @@ sealed interface ProfileChange {
 
 enum class ProfileCommandResult { Success, NotFound, StorageError }
 
+sealed interface ProfileSnapshot {
+    data class Data(val profiles: List<TravelProfile>, val selectedProfileId: String?) : ProfileSnapshot
+    data object StorageError : ProfileSnapshot
+}
+
 interface ProfileRepository {
-    fun profiles(): List<TravelProfile>
-    fun selectedProfileId(): String?
+    fun snapshot(): ProfileSnapshot
     fun create(draft: ProfileDraft): ProfileChange
     fun update(id: String, draft: ProfileDraft): ProfileChange
     fun delete(id: String): ProfileCommandResult

@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import fr.ontime.domain.ProfileChange
 import fr.ontime.domain.ProfileDraft
 import fr.ontime.domain.ProfileCommandResult
+import fr.ontime.domain.ProfileSnapshot
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -32,15 +33,27 @@ class SharedPreferencesProfileRepositoryTest {
         assertEquals(ProfileCommandResult.Success, firstRepository.select("profile-2"))
 
         val restarted = SharedPreferencesProfileRepository(context)
-        assertEquals(listOf("profile-1", "profile-2"), restarted.profiles().map { it.id })
-        assertEquals("profile-2", restarted.selectedProfileId())
+        val restartedSnapshot = restarted.snapshot() as ProfileSnapshot.Data
+        assertEquals(listOf("profile-1", "profile-2"), restartedSnapshot.profiles.map { it.id })
+        assertEquals("profile-2", restartedSnapshot.selectedProfileId)
         assertTrue(restarted.update("profile-2", draft("C")) is ProfileChange.Success)
 
         val restartedAgain = SharedPreferencesProfileRepository(context)
-        assertEquals("C", restartedAgain.profiles().last().lineId)
+        assertEquals("C", (restartedAgain.snapshot() as ProfileSnapshot.Data).profiles.last().lineId)
         assertEquals(ProfileCommandResult.Success, restartedAgain.delete("profile-2"))
-        assertEquals("profile-1", restartedAgain.selectedProfileId())
+        assertEquals("profile-1", (restartedAgain.snapshot() as ProfileSnapshot.Data).selectedProfileId)
         assertEquals(ProfileCommandResult.NotFound, restartedAgain.select("missing"))
+    }
+
+    @Test
+    fun malformedStorageIsReportedAndNeverOverwrittenAsEmpty() {
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        assertTrue(preferences.edit().putString("profiles", "not-json").commit())
+        val repository = SharedPreferencesProfileRepository(context) { "profile-1" }
+
+        assertEquals(ProfileSnapshot.StorageError, repository.snapshot())
+        assertEquals(ProfileChange.StorageError, repository.create(draft("A")))
+        assertEquals("not-json", preferences.getString("profiles", null))
     }
 
     private fun draft(line: String) = ProfileDraft(
