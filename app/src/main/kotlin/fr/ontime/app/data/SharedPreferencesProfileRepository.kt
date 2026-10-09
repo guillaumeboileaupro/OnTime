@@ -19,18 +19,15 @@ class SharedPreferencesProfileRepository(
     private val preferences = context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE)
 
     @Synchronized
-    override fun snapshot(): ProfileSnapshot {
-        val profiles = readProfiles() ?: return ProfileSnapshot.StorageError
-        return ProfileSnapshot.Data(profiles, selectedProfileId(profiles))
-    }
+    override fun snapshot(): ProfileSnapshot = readData() ?: ProfileSnapshot.StorageError
 
     @Synchronized
     override fun create(draft: ProfileDraft): ProfileChange {
         val result = draft.toProfile(idFactory())
         if (result !is ProfileChange.Success) return result
-        val current = readProfiles() ?: return ProfileChange.StorageError
-        val updated = current + result.profile
-        return if (write(updated, selectedProfileId(current) ?: result.profile.id)) {
+        val current = readData() ?: return ProfileChange.StorageError
+        val updated = current.profiles + result.profile
+        return if (write(updated, current.selectedProfileId ?: result.profile.id)) {
             result
         } else {
             ProfileChange.StorageError
@@ -39,11 +36,11 @@ class SharedPreferencesProfileRepository(
 
     @Synchronized
     override fun update(id: String, draft: ProfileDraft): ProfileChange {
-        val current = readProfiles() ?: return ProfileChange.StorageError
-        if (current.none { it.id == id }) return ProfileChange.NotFound
+        val current = readData() ?: return ProfileChange.StorageError
+        if (current.profiles.none { it.id == id }) return ProfileChange.NotFound
         val result = draft.toProfile(id)
         if (result !is ProfileChange.Success) return result
-        return if (write(current.map { if (it.id == id) result.profile else it }, selectedProfileId(current))) {
+        return if (write(current.profiles.map { if (it.id == id) result.profile else it }, current.selectedProfileId)) {
             result
         } else {
             ProfileChange.StorageError
@@ -52,10 +49,10 @@ class SharedPreferencesProfileRepository(
 
     @Synchronized
     override fun delete(id: String): ProfileCommandResult {
-        val current = readProfiles() ?: return ProfileCommandResult.StorageError
-        if (current.none { it.id == id }) return ProfileCommandResult.NotFound
-        val remaining = current.filterNot { it.id == id }
-        val selected = selectedProfileId(current).takeUnless { it == id } ?: remaining.firstOrNull()?.id
+        val current = readData() ?: return ProfileCommandResult.StorageError
+        if (current.profiles.none { it.id == id }) return ProfileCommandResult.NotFound
+        val remaining = current.profiles.filterNot { it.id == id }
+        val selected = current.selectedProfileId.takeUnless { it == id } ?: remaining.firstOrNull()?.id
         return if (write(remaining, selected)) {
             ProfileCommandResult.Success
         } else {
@@ -65,8 +62,8 @@ class SharedPreferencesProfileRepository(
 
     @Synchronized
     override fun select(id: String): ProfileCommandResult {
-        val current = readProfiles() ?: return ProfileCommandResult.StorageError
-        if (current.none { it.id == id }) return ProfileCommandResult.NotFound
+        val current = readData() ?: return ProfileCommandResult.StorageError
+        if (current.profiles.none { it.id == id }) return ProfileCommandResult.NotFound
         return if (preferences.edit().putString(KEY_SELECTED, id).commit()) {
             ProfileCommandResult.Success
         } else {
@@ -74,14 +71,9 @@ class SharedPreferencesProfileRepository(
         }
     }
 
-    private fun selectedProfileId(profiles: List<TravelProfile>): String? {
-        val selected = preferences.getString(KEY_SELECTED, null)
-        return selected?.takeIf { id -> profiles.any { it.id == id } }
-    }
-
-    private fun readProfiles(): List<TravelProfile>? = runCatching {
+    private fun readData(): ProfileSnapshot.Data? = runCatching {
         val array = JSONArray(preferences.getString(KEY_PROFILES, "[]"))
-        buildList {
+        val profiles = buildList {
             repeat(array.length()) { index ->
                 val item = array.getJSONObject(index)
                 add(
@@ -96,6 +88,9 @@ class SharedPreferencesProfileRepository(
                 )
             }
         }
+        val selected = preferences.getString(KEY_SELECTED, null)
+            ?.takeIf { id -> profiles.any { it.id == id } }
+        ProfileSnapshot.Data(profiles, selected)
     }.getOrNull()
 
     private fun write(profiles: List<TravelProfile>, selectedId: String?): Boolean {
@@ -120,6 +115,6 @@ class SharedPreferencesProfileRepository(
     companion object {
         internal const val FILE_NAME = "ontime_profiles"
         private const val KEY_PROFILES = "profiles"
-        private const val KEY_SELECTED = "selected_profile_id"
+        internal const val KEY_SELECTED = "selected_profile_id"
     }
 }

@@ -112,10 +112,14 @@ fun ProfileSection(repository: ProfileRepository, clock: Clock, selection: Selec
                     Text("Aucun départ fixture compatible à calculer.", color = ProfileInk)
                 } else {
                     val leave = HomeDepartureCalculator(clock).calculate(departure.departureAt, profile)
-                    val formatted = DateTimeFormatter.ofPattern("HH:mm")
-                        .withZone(ZoneId.of("Europe/Paris"))
-                        .format(leave.leaveAt)
-                    Text("Départ de chez soi : $formatted (fixture)", color = ProfileInk)
+                    if (leave.timeUntilLeave.isNegative) {
+                        Text("Aucun départ fixture compatible à calculer.", color = ProfileInk)
+                    } else {
+                        val formatted = DateTimeFormatter.ofPattern("HH:mm")
+                            .withZone(ZoneId.of("Europe/Paris"))
+                            .format(leave.leaveAt)
+                        Text("Départ de chez soi : $formatted (fixture)", color = ProfileInk)
+                    }
                 }
             }
         }

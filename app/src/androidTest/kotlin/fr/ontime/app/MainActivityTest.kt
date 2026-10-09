@@ -54,6 +54,18 @@ class MainActivityTest {
             .performScrollTo().assertIsDisplayed()
     }
 
+    @Test
+    fun rejectsFixtureDepartureAlreadyMissedWithProfileDurations() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        SharedPreferencesProfileRepository(context) { "profile-missed" }.create(
+            ProfileDraft("demo:stop:central", "demo:line:a", "Direction fictive", 20, 2),
+        )
+        composeRule.activityRule.scenario.recreate()
+
+        composeRule.onNodeWithText("Aucun départ fixture compatible à calculer.")
+            .performScrollTo().assertIsDisplayed()
+    }
+
     private fun assertScenario(button: String, expectedState: String) {
         composeRule.onNodeWithText(button).performClick()
         composeRule.onNodeWithText(expectedState).assertIsDisplayed()

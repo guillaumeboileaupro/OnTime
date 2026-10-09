@@ -56,6 +56,17 @@ class SharedPreferencesProfileRepositoryTest {
         assertEquals("not-json", preferences.getString("profiles", null))
     }
 
+    @Test
+    fun malformedSelectedIdTypeIsReportedWithoutCrashing() {
+        val repository = SharedPreferencesProfileRepository(context) { "profile-1" }
+        assertTrue(repository.create(draft("A")) is ProfileChange.Success)
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        assertTrue(preferences.edit().putInt(SharedPreferencesProfileRepository.KEY_SELECTED, 42).commit())
+
+        assertEquals(ProfileSnapshot.StorageError, repository.snapshot())
+        assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
+    }
+
     private fun draft(line: String) = ProfileDraft(
         stopId = "demo:stop",
         lineId = line,
