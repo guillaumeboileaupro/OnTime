@@ -9,7 +9,10 @@
   locaux, dont aucun depart invente.
 - [ ] Issue #1 : revue independante de la premiere extraction et traitement des
   retours avant decision de merge.
-- [ ] Fiabiliser dates/fuseaux, erreurs, cache, doublons et TLS.
+- [x] Issues #1/#2 : parser les dates completes avec `Z`/offset et produire un
+  instant UTC par calcul pur, avec fixtures minuit/calendrier/DST/invalides.
+- [ ] Issue #2 : raccorder le parseur aux DTO fournisseur, puis traiter erreurs,
+  cache, doublons et TLS.
 - [ ] Initialiser Android Kotlin/Compose et construire un APK sur fixtures.
 - [ ] Integrer PRIM et une gare SNCF avec couverture et quotas verifies.
 - [ ] Profils/favoris et UI e-paper accessible, persistance et mode hors ligne.
