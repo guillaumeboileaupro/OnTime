@@ -44,7 +44,11 @@ fun parseDateTime(value: String?): DateTimeResult {
     }
 
     return try {
-        val parsed = OffsetDateTime.parse(value, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        // The shared contract ignores sub-second precision. Removing the
+        // already-validated fraction also accepts provider precision longer
+        // than java.time's nanosecond limit, as the C++ parser does.
+        val normalized = value.substring(0, 19) + suffix
+        val parsed = OffsetDateTime.parse(normalized, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         if (parsed.year < 1) {
             DateTimeResult(error = DateTimeError.InvalidDate)
         } else {

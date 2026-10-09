@@ -44,8 +44,11 @@
   committer. Le retour a ete repondu puis resolu sans reecriture d'historique.
   La revue suivante a demande l'usage effectif de `DepartureRepository`, le
   rejet des instants transport pre-epoque et les insets systeme : ces trois
-  retours ont ete corriges et testes. Une confirmation Codex doit viser le HEAD
-  corrige; elle ne constitue pas une revue humaine/Claude independante.
+  retours ont ete corriges et testes. La confirmation a ensuite detecte la
+  limite de neuf chiffres de fraction de `java.time`; la fraction validee est
+  maintenant ignoree avant parsing, conformement a la troncature C++. Une
+  derniere confirmation Codex doit viser le HEAD corrige; elle ne constitue pas
+  une revue humaine/Claude independante.
 - Disque et nettoyage : depot mesure a `87M` avec les preuves de build locales
   (`app/build` 73M, `core-domain/build` 1.7M, `.gradle` 1.5M), disque 465G dont
   174G disponibles. Ces trois repertoires generes sont nettoyes apres collecte
