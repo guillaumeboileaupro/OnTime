@@ -15,7 +15,10 @@
 - [ ] Profils/favoris et UI e-paper accessible, persistance et mode hors ligne.
 - [ ] Widget Glance, instances independantes et fraicheur visible.
 - [ ] Rappels, permissions, annulation/dedup et observation sur OPPO reel.
-- [ ] CI, installation/mise a jour, attribution et release autorisee.
+- [x] Issue #8 : premiere CI C++ portable sur PR et push vers `main`.
+- [ ] Issue #8 : build Android, APK et validation d'installation apres
+  initialisation Android.
+- [ ] Attribution et release autorisee.
 
 Ne cocher qu'avec preuve et reference de commit/PR. Revue/CI/appareil sont des
 criteres distincts. Aucun merge ou publication automatique.
