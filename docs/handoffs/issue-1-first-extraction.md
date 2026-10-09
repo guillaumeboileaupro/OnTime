@@ -3,10 +3,10 @@
 - Agent et role : Codex, implementation autorisee et validation technique de la
   tranche; aucune revue independante realisee.
 - Branche, base et HEAD exact : `refactor/issue-1-transport-domain`, base
-  `dfe5992fc607b7c4d6645a5c731df3180627c6db`, implementation testee
-  `203621008e1ef075231d78ca5bb367e59bc36fd6`.
-- PR et perimetre autorise : issue #1; push et ouverture de PR autorises; aucun
-  merge ni release autorise.
+  `dfe5992fc607b7c4d6645a5c731df3180627c6db`, code et CI finaux testes
+  `4505118d4e9914e3be8bd606cffdc4d11783f0c1`.
+- PR et perimetre autorise : PR #10, `Refs #1` et `Refs #8`; push autorise;
+  aucun merge, deploiement ni release autorise.
 - Fichiers modifies et responsabilites : `departure.h` porte le modele pur;
   `departure_policy.h` garde la compatibilite ESP32 et selectionne une entree
   normalisee; le test C++ et son lanceur couvrent les invariants; audit, README
@@ -14,19 +14,26 @@
 - Comportements conserves / modifications : `firstReachable` et son appel par
   `donnees_api.cpp` sont inchanges. La nouvelle selection trie logiquement une
   liste non triee, ignore suppression/inatteignable et renvoie des etats
-  explicites sans creer de depart.
+  explicites sans creer de depart. Le melange frais/perime est `Empty` si aucune
+  entree fraiche n'est recommandable; des entrees toutes perimees sont `Stale`;
+  une donnee invalide ou collectee dans le futur est `Error`.
 - Decisions et contrats partages : un resultat disponible pointe toujours vers
   un `Departure` fourni par l'adaptateur; `Empty`, `Stale` et `Error` ont un
-  pointeur nul. Les identifiants restent qualifies par fournisseur. Ce contrat
-  est destine a etre porte en Kotlin pur pour l'application, le widget et les
-  rappels, sans initialiser Android dans cette tranche.
+  pointeur nul. `Empty` signifie qu'une donnee valide et fraiche ne contient
+  aucun service recommandable; il ne masque pas une entree invalide. Les
+  identifiants restent qualifies par fournisseur. Ce contrat est destine a etre
+  porte en Kotlin pur, sans initialiser Android dans cette tranche.
 - Commandes executees, resultats et SHA teste : `tests/run_cpp_tests.sh` (succes),
   `sh -n tests/run_cpp_tests.sh` (succes), compilation/execution G++ C++11 avec
   `-Wall -Wextra -Werror -pedantic` (succes), ASan/UBSan avec
-  `ASAN_OPTIONS=detect_leaks=0` (succes), `git diff --check` (succes), au SHA
-  `203621008e1ef075231d78ca5bb367e59bc36fd6`.
-- CI : aucune CI configuree/observee avant la PR; statut distant a verifier apres
-  push et ouverture.
+  `ASAN_OPTIONS=detect_leaks=0` (succes), parsing YAML Ruby (succes),
+  `git diff --check origin/main...HEAD` (succes), au SHA
+  `4505118d4e9914e3be8bd606cffdc4d11783f0c1`.
+- CI : workflow `C++ domain` avec `contents: read`, sans secret, sur PR et push
+  vers `main`. Run [37895718284](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37895718284)
+  reussi au SHA teste : job [Portable domain tests](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37895718284/job/113706494614)
+  et job [ASan and UBSan](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37895718284/job/113706494420)
+  reussis.
 - Niveau de preuve : tests unitaires locaux sur donnees construites en memoire;
   aucun appel API, emulateur, ESP32, ecran ou telephone reel.
 - Controles non executes et raisons : firmware complet non compile
@@ -37,12 +44,20 @@
   parsing date/fuseau, erreurs fournisseur, deduplication, cache et TLS restent
   a traiter. `Estimated` reste non recommandable comme avant cette tranche.
   Les droits de redistribution GadgetTech restent a clarifier.
-- Revue demandee et retours traites : revue independante requise sur le dernier
-  HEAD de la PR; indisponible pendant cette realisation, aucun retour traite.
+- Revue demandee et retours traites : revue automatique Codex du SHA `ac29187`
+  traitee. Le P2 frais/perime est corrige par `45fcb60` et couvert par les cas
+  demandes. Le P1 identite etait un faux positif : `git show --format=fuller`
+  local et les commits GitHub donnent l'identite `guillaumeboileaupro` avec
+  l'adresse `guillaume.boileaupro@gmail.com`; aucun historique partage n'a ete
+  reecrit.
+  Une revue independante humaine/Claude n'est pas revendiquee.
 - Disque avant/apres, chemins propres a la tranche, nettoyage et reste conserve :
-  depot `7.7M` avant tests; executables crees sous `/tmp`, le lanceur nettoie son
-  `mktemp`; binaire sanitizer `/tmp/ontime-departure-policy-sanitized` supprime
-  avant handoff. Aucun cache global, SDK, source, asset ou preuve utile supprime.
+  depot `7.9M` avant corrections et `8.0M` apres ajout du workflow/tests/docs;
+  executables crees sous `/tmp`, le lanceur nettoie son `mktemp`; binaire
+  sanitizer `/tmp/ontime-departure-policy-sanitized` supprime avant handoff.
+  Aucun cache global, SDK, source, asset ou preuve utile supprime.
 - Prochaine action et decision attendue de Guillaume : obtenir une revue
-  independante, traiter ses retours, puis decider du merge. Tranche suivante
-  proposee : fixtures anonymisees et parsing d'instants complets date/fuseau.
+  independante si souhaite, puis decider du merge. Ne pas fermer l'issue #8 :
+  build Android, APK et installation restent a faire. Apres cloture de la PR,
+  tranche suivante : dates/fuseaux complets avec fixtures deterministes, en
+  preparation du domaine Kotlin Android.
