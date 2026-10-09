@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -47,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.ontime.app.data.DemoScenario
 import fr.ontime.app.data.FixtureDepartureRepository
+import fr.ontime.app.data.SharedPreferencesProfileRepository
 import fr.ontime.domain.Departure
 import fr.ontime.domain.DepartureRepository
 import fr.ontime.domain.Selection
@@ -72,6 +74,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun OnTimeApp() {
+    val applicationContext = LocalContext.current.applicationContext
+    val profileRepository = remember { SharedPreferencesProfileRepository(applicationContext) }
     val colors = lightColorScheme(
         primary = Ink,
         onPrimary = Paper,
@@ -86,12 +90,12 @@ fun OnTimeApp() {
         outline = Ink,
     )
     MaterialTheme(colorScheme = colors) {
-        DemoDeparturesScreen()
+        DemoDeparturesScreen(profileRepository)
     }
 }
 
 @Composable
-private fun DemoDeparturesScreen() {
+private fun DemoDeparturesScreen(profileRepository: fr.ontime.domain.ProfileRepository) {
     var scenario by remember { mutableStateOf(DemoScenario.Available) }
     val repository: DepartureRepository = remember(scenario) {
         FixtureDepartureRepository(DemoClock, scenario)
@@ -156,6 +160,7 @@ private fun DemoDeparturesScreen() {
             }
         }
         SelectionPanel(selection)
+        ProfileSection(profileRepository, DemoClock)
         Text(
             text = "Source : fixtures locales • aucune API ni donnée temps réel",
             color = Ink,
