@@ -4,7 +4,8 @@
   tranche; aucune revue independante realisee.
 - Branche, base et HEAD exact : `refactor/issue-1-transport-domain`, base
   `dfe5992fc607b7c4d6645a5c731df3180627c6db`, code et CI finaux testes
-  `4505118d4e9914e3be8bd606cffdc4d11783f0c1`.
+  `fc2cedd4e02816544d3b55664c70c7fa39b2941a`. Le commit qui contient cette
+  actualisation est documentaire et ne modifie ni le code ni le workflow teste.
 - PR et perimetre autorise : PR #10, `Refs #1` et `Refs #8`; push autorise;
   aucun merge, deploiement ni release autorise.
 - Fichiers modifies et responsabilites : `departure.h` porte le modele pur;
@@ -28,11 +29,12 @@
   `-Wall -Wextra -Werror -pedantic` (succes), ASan/UBSan avec
   `ASAN_OPTIONS=detect_leaks=0` (succes), parsing YAML Ruby (succes),
   `git diff --check origin/main...HEAD` (succes), au SHA
-  `4505118d4e9914e3be8bd606cffdc4d11783f0c1`.
+  `fc2cedd4e02816544d3b55664c70c7fa39b2941a`.
 - CI : workflow `C++ domain` avec `contents: read`, sans secret, sur PR et push
-  vers `main`. Run [37895718284](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37895718284)
-  reussi au SHA teste : job [Portable domain tests](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37895718284/job/113706494614)
-  et job [ASan and UBSan](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37895718284/job/113706494420)
+  vers `main`. Le controle whitespace compare le diff commite base/HEAD sur PR
+  et before/SHA sur push. Run [37897853934](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37897853934)
+  reussi au SHA teste : job [Portable domain tests](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37897853934/job/113713227155)
+  et job [ASan and UBSan](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37897853934/job/113713227397)
   reussis.
 - Niveau de preuve : tests unitaires locaux sur donnees construites en memoire;
   aucun appel API, emulateur, ESP32, ecran ou telephone reel.
@@ -49,8 +51,10 @@
   demandes. Le P1 identite etait un faux positif : `git show --format=fuller`
   local et les commits GitHub donnent l'identite `guillaumeboileaupro` avec
   l'adresse `guillaume.boileaupro@gmail.com`; aucun historique partage n'a ete
-  reecrit.
-  Une revue independante humaine/Claude n'est pas revendiquee.
+  reecrit. La revue de `c3ca122` a demande de verifier les changements commites,
+  correction faite par `fc2cedd`; son fil est repondu et resolu. La revue de
+  confirmation de `fc2cedd` a demande cette actualisation de passation. Une
+  revue independante humaine/Claude n'est pas revendiquee.
 - Disque avant/apres, chemins propres a la tranche, nettoyage et reste conserve :
   depot `7.9M` avant corrections et `8.0M` apres ajout du workflow/tests/docs;
   executables crees sous `/tmp`, le lanceur nettoie son `mktemp`; binaire
