@@ -4,8 +4,8 @@
   aucune revue independante humaine/Claude revendiquee.
 - Branche, base et HEAD exact : `feat/issues-1-2-datetime-parser`, base dependante
   `refactor/issue-1-transport-domain` au SHA
-  `8158edc97c75a20adf90a603c98f4f91f75e9ffc`, implementation testee
-  `513451e895eca5f1241f3d018a44edaf824d50a6`.
+  `8158edc97c75a20adf90a603c98f4f91f75e9ffc`, implementation et passation
+  testees `5f3f292f930d3a8c9fef7c2bf7f8eeff769f87da`.
 - PR et perimetre autorise : PR #11, basee sur la branche de la PR #10 encore
   ouverte; `Refs #1` et `Refs #2`; aucun merge, deploiement ou release autorise.
 - Fichiers modifies et responsabilites : `datetime_parser.*` parse et convertit
@@ -26,10 +26,10 @@
   C++11 `-Wall -Wextra -Werror -pedantic` (succes); ASan/UBSan sur les deux
   binaires avec LeakSanitizer desactive (succes); `sh -n` (succes); parsing YAML
   Ruby (succes); `git diff --check` contre la base dependante (succes), au SHA
-  `513451e895eca5f1241f3d018a44edaf824d50a6`.
-- CI : run [37899025647](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37899025647)
-  reussi; jobs [Portable domain tests](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37899025647/job/113716978940)
-  et [ASan and UBSan](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37899025647/job/113716979174)
+  `5f3f292f930d3a8c9fef7c2bf7f8eeff769f87da`.
+- CI : run [37899116139](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37899116139)
+  reussi; jobs [Portable domain tests](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37899116139/job/113717270348)
+  et [ASan and UBSan](https://github.com/guillaumeboileaupro/OnTime/actions/runs/37899116139/job/113717270574)
   reussis.
 - Niveau de preuve : fixtures C++ deterministes en memoire; aucun appel API,
   materiel, emulateur ou telephone reel.
@@ -40,8 +40,11 @@
   historiquement a une zone IANA nommee. Les transitions Europe/Paris sont
   couvertes uniquement par offsets explicites. Le raccordement aux DTO
   fournisseur et le port Kotlin restent des tranches ulterieures.
-- Revue demandee et retours traites : revue independante attendue sur le dernier
-  HEAD de la PR #11; aucun retour traite a ce stade.
+- Revue demandee et retours traites : la premiere revue Codex a signale une
+  identite IA non observee; `git show --format=fuller` et GitHub confirment
+  Guillaume comme auteur/committer. Le fil a ete repondu et resolu sans reecrire
+  l'historique. La revue Codex de confirmation sur `5f3f292` n'a trouve aucun
+  probleme majeur. Une revue humaine/Claude independante n'est pas revendiquee.
 - Disque avant/apres, chemins propres a la tranche, nettoyage et reste conserve :
   depot `8.0M` avant la tranche et `8.3M` apres sources/tests/docs; executables
   sanitizer sous `/tmp` supprimes; le lanceur nettoie son repertoire `mktemp`.
