@@ -53,3 +53,16 @@ Date : 9 octobre 2026. Base auditee : `dfe5992` (`main`).
 La premiere extraction conserve `firstReachable` et son appel dans le firmware.
 La nouvelle selection ne fabrique jamais de `Departure` : en succes, son
 pointeur designe obligatoirement un element fourni en entree; sinon il est nul.
+
+### Contrat de resultat de la selection
+
+| Statut | Condition |
+| --- | --- |
+| `Available` | Au moins un depart valide, frais et atteignable; le plus tot est retourne par reference vers l'entree |
+| `Empty` | Liste vide, ou au moins une donnee valide et fraiche mais aucun depart recommandable (passe, annule ou `Estimated`) |
+| `Stale` | Toutes les entrees valides sont plus anciennes que le seuil de fraicheur |
+| `Error` | Echec source, arguments incoherents, tableau nul non vide, identite/horodatage invalide ou collecte datee dans le futur |
+
+Dans un melange frais/perime, les donnees fraiches determinent donc `Empty` si
+aucun depart n'est recommandable. Une entree invalide fait echouer la selection
+en `Error` au lieu d'etre ignoree comme si aucun service n'existait.
