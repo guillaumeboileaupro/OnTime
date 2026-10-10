@@ -81,8 +81,8 @@ class SharedPreferencesProfileRepository(
                         stopId = item.getString("stopId"),
                         lineId = item.getString("lineId"),
                         direction = item.getString("direction"),
-                        walkingMinutes = item.getInt("walkingMinutes"),
-                        marginMinutes = item.getInt("marginMinutes"),
+                        walkingMinutes = item.exactInt("walkingMinutes"),
+                        marginMinutes = item.exactInt("marginMinutes"),
                     ).toProfile(item.getString("id"))
                 require(result is ProfileChange.Success)
                 add(result.profile)
@@ -93,6 +93,12 @@ class SharedPreferencesProfileRepository(
         require(profiles.map { it.id }.distinct().size == profiles.size)
         ProfileSnapshot.Data(profiles, selected)
     }.getOrNull()
+
+    private fun JSONObject.exactInt(key: String): Int {
+        val value = get(key)
+        require(value is Int)
+        return value
+    }
 
     private fun write(profiles: List<TravelProfile>, selectedId: String?): Boolean {
         val array = JSONArray()

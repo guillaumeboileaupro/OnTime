@@ -139,9 +139,16 @@ fun ProfileSection(repository: ProfileRepository, clock: Clock, selection: Selec
                     message = when (result) {
                         is ProfileChange.Success -> {
                             editingId = result.profile.id
-                            when (repository.select(result.profile.id)) {
+                            val alreadySelected = (repository.snapshot() as? ProfileSnapshot.Data)
+                                ?.selectedProfileId == result.profile.id
+                            val selectionResult = if (alreadySelected) {
+                                ProfileCommandResult.Success
+                            } else {
+                                repository.select(result.profile.id)
+                            }
+                            refresh()
+                            when (selectionResult) {
                                 ProfileCommandResult.Success -> {
-                                    refresh()
                                     "Profil enregistré"
                                 }
                                 ProfileCommandResult.NotFound -> "Profil enregistré mais introuvable"

@@ -117,6 +117,19 @@ class SharedPreferencesProfileRepositoryTest {
         assertEquals("missing", preferences.getString(SharedPreferencesProfileRepository.KEY_SELECTED, null))
     }
 
+    @Test
+    fun fractionalOrStringDurationsAreRejectedWithoutCoercion() {
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        val fractional = """[{"id":"bad","stopId":"s","lineId":"l","direction":"d","walkingMinutes":-0.5,"marginMinutes":2}]"""
+        assertTrue(preferences.edit().putString("profiles", fractional).commit())
+        assertEquals(ProfileSnapshot.StorageError, SharedPreferencesProfileRepository(context).snapshot())
+
+        val numericString = """[{"id":"bad","stopId":"s","lineId":"l","direction":"d","walkingMinutes":"7","marginMinutes":2}]"""
+        assertTrue(preferences.edit().putString("profiles", numericString).commit())
+        assertEquals(ProfileSnapshot.StorageError, SharedPreferencesProfileRepository(context).snapshot())
+        assertEquals(numericString, preferences.getString("profiles", null))
+    }
+
     private fun draft(line: String) = ProfileDraft(
         stopId = "demo:stop",
         lineId = line,
