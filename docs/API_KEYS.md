@@ -58,8 +58,15 @@ le parseur `/departures` et une source avec cache. Le domaine `RequestBudget`
 impose une requete toutes les 20 s au plus, partagee par l'appli : au maximum
 4320 appels par 24 h, sous les 5000 autorises. Une reponse refusee par le budget
 reutilise le dernier resultat, qui devient perime selon sa `fetchedAt`.
-Pas encore branche a l'ecran. A verifier avec une vraie cle : codes d'erreur
-(401/403/429 supposes) et presence des trains supprimes dans `/departures`.
+Pas encore branche a l'ecran.
+
+Appel reel verifie le 2026-10-10 (11:56, heure de Paris), gare
+`stop_area:SNCF:87756056` : HTTP 200, `context.timezone` = `Europe/Paris`,
+10 departs `physical_mode:Train` (mode commercial « ZOU ! »), tous les champs
+lus par le parseur presents, 4 departs `realtime` dont deux retards (+20 et
++10 min), 6 `base_schedule`. Une cle invalide renvoie HTTP 401. Restent non
+observes : 429 (quota) et la representation d'un train supprime
+(`NO_SERVICE`) dans `/departures`.
 
 Choix recommande :
 - par gare, leger : API SNCF (cle) `.../stop_areas/<id>/departures`;

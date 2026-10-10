@@ -16,8 +16,10 @@
 - Tests : `:core-domain:test` (5 tests budget), `:app:testDebugUnitTest`
   (6 tests SNCF sur fixture anonymisee), `assembleDebug`,
   `assembleDebugAndroidTest` reussis en local. Aucun appel reseau en CI.
-- Limites : aucun appel reel effectue (pas de cle locale). Codes d'erreur et
-  trains supprimes non documentes par Navitia : a verifier avec la cle avant
-  affichage. Budget en memoire : un redemarrage du processus le reinitialise.
-- Prochaine action : Guillaume ajoute sa cle; tranche suivante = appel hors
+- Appel reel (curl, cle de Guillaume, 2 requetes) : HTTP 200 et structure
+  conforme au parseur sur une gare TER, retards temps reel visibles; cle
+  invalide -> 401. Detail dans `docs/API_KEYS.md`.
+- Limites : 429 et trains supprimes (`NO_SERVICE`) non observes; a traiter
+  avant affichage. Budget en memoire : un redemarrage du processus le reinitialise.
+- Prochaine action : tranche suivante = appel hors
   thread principal et affichage pour le profil selectionne.
