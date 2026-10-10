@@ -1,44 +1,65 @@
 # OnTime - plan a cases
 
+Etat au 2026-10-10. PRs empilees non mergees : #12 -> #13 -> #15 -> #16 -> #17
+-> #18 -> #19 -> #20. Cible : Android (dev/CI sous Linux), reseaux SNCF et
+Lignes d'Azur des Alpes-Maritimes.
+
+## Socle
+
 - [x] Restaurer la base GadgetTech et conserver la provenance.
-- [x] Conserver le logo fourni inchange.
-- [x] Etablir le cadrage partage Claude/Codex et les skills locaux.
-- [x] Issue #1 : audit cible des dependances et plan de petites extractions
-  (`docs/AUDIT_ISSUE_1.md`).
-- [x] Issue #1 : premiere extraction C++ pure sans ESP32/ecran/reseau et tests
-  locaux, dont aucun depart invente.
-- [ ] Issue #1 : revue independante de la premiere extraction et traitement des
-  retours avant decision de merge.
-- [x] Issues #1/#2 : parser les dates completes avec `Z`/offset et produire un
-  instant UTC par calcul pur, avec fixtures minuit/calendrier/DST/invalides.
-- [ ] Issue #2 : raccorder le parseur aux DTO fournisseur, puis traiter erreurs,
-  cache, doublons et TLS.
-- [x] Issue #3 : initialiser Android Kotlin/Compose et construire un APK debug
-  sur fixtures, avec domaine Kotlin pur et quatre etats visibles.
-- [x] Issue #4 : client API SNCF, parseur `/departures` et quota de 20 s
-  testes sur fixture (`feat/issue-4-sncf-departures`).
-- [x] Issue #4 : gare la plus proche et temps de marche SNCF depuis la position,
-  a la demande, testes sur fixtures (`feat/issue-4-sncf-departures`).
-- [ ] Issue #4 : bouton de localisation observe sur OPPO reel.
-- [ ] Issue #4 : departs reels a l'ecran et gestion des trains supprimes.
-- [ ] Integrer l'API SNCF et Lignes d'Azur (GTFS-RT ou SIRI) avec couverture et
-  quotas verifies (`docs/API_KEYS.md`).
-- [x] Issue #5 : profils locaux persistants avec CRUD, selection, validation et
-  calcul du depart de chez soi sur fixtures.
-- [ ] Issue #5 : favoris fournisseurs, revue accessibilite sur appareil et mode
-  hors ligne avec donnees transport reelles.
-- [ ] Widget Glance, instances independantes et fraicheur visible.
-- [ ] Rappels, permissions, annulation/dedup et observation sur OPPO reel.
-- [x] Issue #8 : premiere CI C++ portable sur PR et push vers `main`
-  (archivee ensuite avec le code GadgetTech).
-- [ ] Archiver le materiel GadgetTech hors build/CI et documenter les cles
-  d'API (`docs/API_KEYS.md`).
-- [x] Issue #8 : tests Android, build APK debug et artefact CI sans signature de
-  production.
-- [x] Issues #3/#8 : lancement instrumente sur emulateur Android 15 en CI,
-  demarrage sans crash et quatre etats de fixtures verifies.
-- [ ] Issues #3/#8 : installation et observation sur OPPO reel.
-- [ ] Attribution et release autorisee.
+- [x] Archiver le materiel GadgetTech hors build/CI (`archive/gadgettech/`, #15).
+- [x] Logo fourni inchange; palette mesuree sur le logo `#DDD9D0` / `#282828`
+  et icone adaptative validee par Guillaume (#17).
+- [x] Cadrage partage Claude/Codex et skills locaux.
+- [x] Issue #1 : extraction du domaine transport (fermee).
+
+## Application (issue #3)
+
+- [x] Android Kotlin/Compose, domaine Kotlin pur teste hors Android (#12).
+- [x] APK installe et lance sur OPPO CPH2145 via adb (2026-10-10).
+- [x] Accueil en francais : partir dans X min, quitter la maison, train et
+  arrivee, etats vide / perime / indisponible expliques (#18).
+- [x] Menu burger (Prochain depart, Mes trajets, A propos avec copyright) et
+  elements de demonstration retires (#18).
+
+## Donnees transport (issues #2, #4)
+
+- [x] Client API SNCF, cle hors depot, quota partage <= 4820 appels/jour (#16, #18).
+- [x] Trains directs depart -> destination avec arrivee, toutes les directions
+  d'une gare, recherche par nom, gare la plus proche + marche (#16, #18).
+- [x] Appels reels verifies (curl) et parcours observe sur OPPO.
+- [ ] Lignes d'Azur : demande d'acces SIRI ou adaptateur GTFS-RT.
+- [ ] Trains supprimes et code 429 observes sur donnees reelles.
+- [ ] Issue #2 : cache hors ligne, doublons multi-fournisseurs, revue TLS.
+
+## Trajets (issue #5)
+
+- [x] Trajet = gare de depart + destination, marche, marge; persistance stricte,
+  validation, calcul avec horloge controlee (#13, #18).
+- [x] Liste « Trajets enregistres », migration des anciens trajets sans
+  effacement silencieux, clavier ferme apres saisie (#18).
+- [ ] TalkBack, grande police et mode hors ligne verifies sur appareil.
+
+## Widget (issue #6)
+
+- [x] Premier widget Glance par trajet, configuration a l'ajout (#19).
+- [ ] Refaire le widget : lecture d'un coup d'oeil (compte a rebours), maquette
+  a valider par Guillaume.
+- [ ] Ajout, redimensionnement, deux instances et ecran eteint observes sur OPPO.
+
+## Rappels (issue #7)
+
+- [x] Creneaux reguliers + rappel ponctuel, alerte 5 min avant, retard/suppression
+  geres, replanification au redemarrage, logique testee (#20).
+- [ ] Notification reelle observee sur OPPO : ecran eteint, Doze, economie d'energie.
+
+## CI et distribution (issue #8)
+
+- [x] CI Android verte sur chaque PR : tests, APK nomme par SHA, tests
+  instrumentes sur emulateur.
+- [x] Installations et mises a jour observees sur OPPO.
+- [ ] Procedure de release, attribution des donnees SNCF et accord de Guillaume.
+- [ ] Revue independante des PRs empilees puis merge par Guillaume.
 
 Ne cocher qu'avec preuve et reference de commit/PR. Revue/CI/appareil sont des
 criteres distincts. Aucun merge ou publication automatique.

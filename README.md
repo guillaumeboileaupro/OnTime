@@ -1,7 +1,8 @@
 # OnTime
 
-Projet d'application Android de prochains departs SNCF, RER, metro et tramway,
-avec widget, rappels de depart et identite visuelle e-paper.
+Application Android personnelle qui dit quand quitter la maison pour prendre son
+train : trains directs SNCF de la gare de depart a la destination, temps de
+marche et marge, widget et rappels. Identite visuelle e-paper.
 
 ![Logo OnTime](assets/branding/ontime-logo.png)
 
@@ -16,18 +17,22 @@ ni ecran physique dans le build, la CI ou l'architecture active.
   historique, ni compilees ni testees ([detail](archive/gadgettech/README.md)).
 
 Voir [plan](docs/ANALYSE_ET_PLAN.md) et [audit amont](docs/AUDIT_AMONT.md).
-Cles d'API et fournisseurs : [API_KEYS.md](docs/API_KEYS.md).
 
-## Application Android de demonstration
+## Fonctions disponibles
 
-La premiere application Compose fonctionne uniquement sur fixtures locales,
-clairement marquees comme demonstration. Elle expose les quatre etats du domaine
-sans API, widget ni notification. Les commandes, versions et limites sont dans
-le [guide Android](docs/ANDROID_BUILD.md).
+- Accueil : « Partir dans X min », heure de quitter la maison, train et arrivee,
+  temps reel ou horaire prevu; etats vide, perime et indisponible expliques.
+  Actualisation chaque minute tant que l'accueil est affiche.
+- Mes trajets : gare de depart (la plus proche ou recherche), destination parmi
+  toutes les directions de la gare ou par recherche, marche et marge
+  ([trajets](docs/PROFILES.md)).
+- Widget d'ecran d'accueil et rappels 5 min avant de partir
+  ([widget et rappels](docs/WIDGET_AND_REMINDERS.md)).
 
-Les [profils locaux](docs/PROFILES.md) permettent de conserver arrêt, ligne,
-direction, marche et marge, puis de calculer l'heure de départ de chez soi sur
-les fixtures de démonstration.
+Limites : trains SNCF seulement (Lignes d'Azur a venir), trains directs
+uniquement, cle SNCF necessaire dans `local.properties`
+([cles d'API](docs/API_KEYS.md)). Construction et installation :
+[guide Android](docs/ANDROID_BUILD.md). Etat detaille : [TODO.md](TODO.md).
 
 ## Logo
 
@@ -38,7 +43,7 @@ La version redessinee precedente n'est plus le logo du projet.
 La police du PNG n'est pas identifiee : ne pas la remplacer par DejaVu Sans
 et ne pas annoncer une police UI equivalente comme identique.
 
-Palette UI demandee : #ddd9d0 et #282828.
+Palette UI mesuree sur le logo : #ddd9d0 et #282828.
 
 ## Provenance
 
