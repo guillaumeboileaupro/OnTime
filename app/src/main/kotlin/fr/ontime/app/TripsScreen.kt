@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import fr.ontime.app.data.DeviceLocator
 import fr.ontime.app.data.TripLabels
 import fr.ontime.app.data.sncf.NearbyStation
+import fr.ontime.app.data.sncf.SncfServices
 import fr.ontime.app.data.sncf.NearestStationResult
 import fr.ontime.app.data.sncf.StationSearchResult
 import fr.ontime.domain.ProfileChange

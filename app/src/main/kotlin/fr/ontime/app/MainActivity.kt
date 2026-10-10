@@ -49,16 +49,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import fr.ontime.app.data.SharedPreferencesProfileRepository
 import fr.ontime.app.data.TripLabels
+import fr.ontime.app.data.sncf.SncfServices
+import fr.ontime.app.widget.TripWidget
+import androidx.glance.appwidget.updateAll
 import fr.ontime.app.data.LegacyTripMigration
 import fr.ontime.app.data.SharedPreferencesLegacyTripStore
-import fr.ontime.app.data.sncf.NearestStationFinder
-import fr.ontime.app.data.sncf.SncfApi
-import fr.ontime.app.data.sncf.SncfClient
-import fr.ontime.app.data.sncf.SncfDepartureSource
-import fr.ontime.app.data.sncf.StationSearch
 import fr.ontime.domain.ProfileSnapshot
-import fr.ontime.domain.RequestBudget
-import fr.ontime.domain.selectNextDeparture
 import java.time.Clock
 import java.time.Duration
 import kotlinx.coroutines.Dispatchers
@@ -66,18 +62,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** One budget for every SNCF call made by this process. */
-private val SncfQuota = RequestBudget()
 private val RefreshEvery: Duration = Duration.ofSeconds(60)
-private val MaxDataAge: Duration = Duration.ofMinutes(3)
-
-/** SNCF use cases sharing one client, clock and quota budget. */
-class SncfServices(apiKey: String, clock: Clock) {
-    val api: SncfApi = SncfClient(apiKey)
-    val departures = SncfDepartureSource(api, SncfQuota, clock)
-    val nearest = NearestStationFinder(api, SncfQuota, clock)
-    val search = StationSearch(api, SncfQuota, clock)
-}
 
 private enum class Screen(val title: String) {
     Home("Prochain départ"),
@@ -97,7 +82,7 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
     val applicationContext = LocalContext.current.applicationContext
     val profileRepository = remember { SharedPreferencesProfileRepository(applicationContext) }
     val labels = remember { TripLabels(applicationContext) }
-    val sncf = remember { BuildConfig.SNCF_API_KEY.takeIf { it.isNotBlank() }?.let { SncfServices(it, clock) } }
+    val sncf = remember { SncfServices.shared() }
     var screen by remember { mutableStateOf(Screen.Home) }
     var revision by remember { mutableIntStateOf(0) }
     var refresh by remember { mutableIntStateOf(0) }
@@ -123,6 +108,11 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
         }
     }
 
+    LaunchedEffect(revision) {
+        // Trips may have been edited or deleted: widgets show them by id.
+        if (revision > 0) TripWidget().updateAll(applicationContext)
+    }
+
     LaunchedEffect(trip, screen, refresh) {
         when {
             sncf == null -> homeState = HomeState.NoKey
@@ -131,21 +121,8 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
             else -> {
                 if (homeState !is HomeState.Ready) homeState = HomeState.Loading
                 while (true) {
-                    val fetched = withContext(Dispatchers.IO) {
-                        sncf.departures.fetchTrip(trip.stopId, trip.destinationId)
-                    }
-                    val now = clock.instant()
-                    homeState = HomeState.Ready(
-                        selectNextDeparture(
-                            departures = fetched.departures,
-                            now = now,
-                            walking = Duration.ofMinutes(trip.walkingMinutes.toLong()),
-                            margin = Duration.ofMinutes(trip.marginMinutes.toLong()),
-                            maxAge = MaxDataAge,
-                            sourceStatus = fetched.status,
-                        ),
-                        checkedAt = now,
-                    )
+                    val update = withContext(Dispatchers.IO) { sncf.tripUpdate(trip) }
+                    homeState = HomeState.Ready(update.selection, update.checkedAt)
                     delay(RefreshEvery.toMillis())
                 }
             }
