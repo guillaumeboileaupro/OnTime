@@ -1,0 +1,24 @@
+{"context": {"timezone": "Europe/Paris"},
+ "journeys": [
+  {"sections": [
+    {"type": "crow_fly"},
+    {"type": "public_transport", "data_freshness": "realtime",
+     "departure_date_time": "20261010T122900", "arrival_date_time": "20261010T125600",
+     "display_informations": {"direction": "Terminus fictif (Commune)"},
+     "links": [{"type": "vehicle_journey", "id": "vehicle_journey:DEMO:1"}, {"type": "line", "id": "line:DEMO:1"},
+               {"type": "route", "id": "route:DEMO:1"}, {"type": "physical_mode", "id": "physical_mode:Train"}]},
+    {"type": "crow_fly"}]},
+  {"sections": [
+    {"type": "public_transport", "data_freshness": "base_schedule",
+     "departure_date_time": "20261010T130000", "arrival_date_time": "20261010T132800",
+     "display_informations": {"direction": "Autre terminus"},
+     "links": [{"type": "vehicle_journey", "id": "vehicle_journey:DEMO:2"}, {"type": "line", "id": "line:DEMO:1"},
+               {"type": "route", "id": "route:DEMO:2"}, {"type": "physical_mode", "id": "physical_mode:Coach"}]}]},
+  {"sections": [
+    {"type": "public_transport", "departure_date_time": "20261010T131000", "arrival_date_time": "20261010T132000",
+     "display_informations": {"direction": "X"},
+     "links": [{"type": "vehicle_journey", "id": "a"}, {"type": "line", "id": "b"}, {"type": "route", "id": "c"}, {"type": "physical_mode", "id": "physical_mode:Train"}]},
+    {"type": "public_transport", "departure_date_time": "20261010T133000", "arrival_date_time": "20261010T134000",
+     "display_informations": {"direction": "Y"},
+     "links": [{"type": "vehicle_journey", "id": "d"}, {"type": "line", "id": "e"}, {"type": "route", "id": "f"}, {"type": "physical_mode", "id": "physical_mode:Train"}]}]}
+ ]}

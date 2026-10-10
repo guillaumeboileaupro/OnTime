@@ -82,8 +82,7 @@ class SharedPreferencesProfileRepository(
                 val item = array.getJSONObject(index)
                 val result = ProfileDraft(
                         stopId = item.exactString("stopId"),
-                        lineId = item.exactString("lineId"),
-                        direction = item.exactString("direction"),
+                        destinationId = item.exactString("destinationId"),
                         walkingMinutes = item.exactInt("walkingMinutes"),
                         marginMinutes = item.exactInt("marginMinutes"),
                     ).toProfile(item.exactString("id"))
@@ -124,8 +123,7 @@ class SharedPreferencesProfileRepository(
                 JSONObject()
                     .put("id", profile.id)
                     .put("stopId", profile.stopId)
-                    .put("lineId", profile.lineId)
-                    .put("direction", profile.direction)
+                    .put("destinationId", profile.destinationId)
                     .put("walkingMinutes", profile.walkingMinutes)
                     .put("marginMinutes", profile.marginMinutes),
             )
@@ -134,7 +132,7 @@ class SharedPreferencesProfileRepository(
     }
 
     companion object {
-        internal const val FILE_NAME = "ontime_profiles"
+        internal const val FILE_NAME = "ontime_trips"
         private const val KEY_PROFILES = "profiles"
         internal const val KEY_SELECTED = "selected_profile_id"
     }

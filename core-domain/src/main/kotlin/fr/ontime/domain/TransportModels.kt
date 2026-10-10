@@ -18,6 +18,8 @@ data class Departure(
     val fetchedAt: Instant,
     val quality: Quality,
     val cancelled: Boolean,
+    /** Arrival at the trip destination, when the provider answers for an origin-destination pair. */
+    val arrivalAt: Instant? = null,
 )
 
 data class Selection(

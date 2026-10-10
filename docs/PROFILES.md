@@ -73,3 +73,22 @@ au premier plan et preremplit l'arret et la marche par l'itineraire pieton SNCF.
 Les valeurs restent modifiables et validees comme une saisie manuelle. La
 position n'est envoyee qu'a l'API SNCF, jamais stockee ni journalisee. Sans cle,
 le bouton est remplace par un message explicite.
+
+## Trajet depart -> destination (2026-10-10)
+
+A la demande de Guillaume, un trajet est desormais une gare de depart et une
+gare de destination (`stopId`, `destinationId`), plus marche et marge; ligne et
+direction ne sont plus saisies. La destination se choisit parmi tous les
+terminus desservis depuis la gare (`/stop_areas/<id>/routes`) ou par recherche
+de nom (`/places`). L'accueil affiche les trains directs (`/journeys`,
+`max_nb_transfers=0`) avec l'heure d'arrivee. Les trajets sont stockes dans
+`ontime_trips`; l'ancien fichier `ontime_profiles` n'est plus lu. Les noms
+lisibles des trajets sont gardes a part (`ontime_trip_labels`).
+
+Les trajets enregistres au format precedent (gare + ligne + route) sont
+convertis au demarrage : le terminus de la route (`/routes/<id>`) devient la
+destination. Tous les terminus sont resolus avant toute ecriture; l'ancien
+fichier n'est efface qu'apres conversion complete, sinon nouvel essai au
+lancement suivant. Les trajets de demonstration (identifiants `demo:`) sont
+abandonnes. Regle : tout futur changement de format convertit les trajets
+existants, jamais d'effacement silencieux.

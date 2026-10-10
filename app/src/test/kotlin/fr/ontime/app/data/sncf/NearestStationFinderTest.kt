@@ -57,7 +57,7 @@ class NearestStationFinderTest {
         assertEquals(NearestStationResult.Error, finder(SncfResponse.Body(nearby), SncfResponse.Body("""{"journeys":[]}""")).find(43.5, 7.25))
         assertEquals(NearestStationResult.Error, finder().find(91.0, 7.25))
 
-        val budget = RequestBudget()
+        val budget = RequestBudget(burst = 2)
         budget.tryAcquire(clock.instant())
         val busy = NearestStationFinder({ error("no call") }, budget, clock)
         assertEquals(NearestStationResult.Busy, busy.find(43.5, 7.25))

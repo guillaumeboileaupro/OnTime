@@ -22,7 +22,7 @@ class SncfDepartureSourceTest {
     fun `serves the cached answer while the budget refuses a new call`() {
         var calls = 0
         val clock = MutableClock(start)
-        val source = SncfDepartureSource({ calls++; SncfResponse.Body(fixture) }, RequestBudget(), clock)
+        val source = SncfDepartureSource({ calls++; SncfResponse.Body(fixture) }, RequestBudget(burst = 1), clock)
 
         val first = source.fetch("stop_area:DEMO:SA:1")
         clock.now = start.plusSeconds(5)
@@ -37,7 +37,7 @@ class SncfDepartureSourceTest {
     @Test
     fun `reports stale without cache and error on provider failures`() {
         val clock = MutableClock(start)
-        val budget = RequestBudget()
+        val budget = RequestBudget(burst = 1)
         budget.tryAcquire(start)
         assertEquals(Status.Stale, SncfDepartureSource({ error("no call") }, budget, clock).fetch("a").status)
 
