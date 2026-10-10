@@ -21,7 +21,16 @@ Licence Ouverte 2.0.
   c'est le format le plus simple pour l'application, si l'acces est accorde.
 - Sinon, combiner GTFS-RT trip updates et GTFS statique (identifiants
   `trip_id`/`stop_id` a rapprocher).
-- Le tramway semble absent du temps reel : l'etiqueter comme theorique.
+- Le tramway (lignes `L1`, `L2`, `L3` du GTFS) semble absent du temps reel :
+  l'etiqueter comme theorique.
+- Metadonnees et historique : API sans cle
+  `https://transport.data.gouv.fr/api/datasets/<id>` (champ `history`).
+  URL stable du dernier GTFS :
+  `https://www.data.gouv.fr/api/1/datasets/r/f5678ab2-c863-4b48-ba1f-9021c7d97634`.
+- Le GTFS est republie chaque nuit (vers minuit) : environ 8 Mo compresse,
+  60 a 120 Mo decompresse, dont `stop_times.txt` (45 a 100 Mo). Ne pas le
+  traiter en entier sur le telephone a chaque lancement : extraire une fois
+  les arrets et lignes utiles, puis rafraichir rarement.
 
 ## SNCF
 
