@@ -27,7 +27,7 @@ Inspecter Git, branche, HEAD, fichiers, PR et CI avant toute affirmation.
 - Application, widget et rappels utilisent les memes contrats et le meme repository.
 - Ne jamais inventer passages, voies, retards, suppressions ou preuves de validation.
 - Conserver source, qualite, identites et horodatage; distinguer erreur/vide/perime.
-- Logo fourni inchange, deux couleurs UI #dfdcd3 et #2a2926.
+- Logo fourni inchange, deux couleurs UI #ddd9d0 et #282828.
   Ne pas redessiner, recadrer ou substituer sa police sans demande explicite.
 - Aucun secret, trajet personnel, lieu domicile ou log identifiant dans Git/PR.
 - Garder verification TLS, controles qualite et tests pertinents actifs.

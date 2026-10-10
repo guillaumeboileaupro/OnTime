@@ -38,7 +38,7 @@ La version redessinee precedente n'est plus le logo du projet.
 La police du PNG n'est pas identifiee : ne pas la remplacer par DejaVu Sans
 et ne pas annoncer une police UI equivalente comme identique.
 
-Palette UI demandee : #dfdcd3 et #2a2926.
+Palette UI demandee : #ddd9d0 et #282828.
 
 ## Provenance
 
