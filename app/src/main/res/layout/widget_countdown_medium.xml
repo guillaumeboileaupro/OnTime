@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Native countdown, medium size for the 4x2 layout: ticks on the home screen without waking the app or the network. -->
+<!-- Fills its width and auto-sizes so minutes and seconds are never clipped. Native countdown, medium size for the 4x2 layout: ticks on the home screen without waking the app or the network. -->
 <Chronometer xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/countdown"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:autoSizeMaxTextSize="32sp"
+    android:autoSizeMinTextSize="18sp"
+    android:autoSizeTextType="uniform"
+    android:maxLines="1"
     android:countDown="true"
     android:textColor="@color/ontime_ink"
     android:textSize="32sp"

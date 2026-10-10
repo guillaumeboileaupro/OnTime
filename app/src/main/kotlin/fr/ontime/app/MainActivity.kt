@@ -226,6 +226,7 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
                         onOpenTrips = { screen = Screen.Trips },
                         onRefresh = { refresh += 1 },
                         reminderNote = reminderNote,
+                        options = remember(screen, refresh) { DisplaySettings(applicationContext).read() },
                         onRemind = { departure ->
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                                 pendingReminder = departure

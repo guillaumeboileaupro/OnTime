@@ -24,30 +24,30 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.glance.appwidget.updateAll
 import fr.ontime.app.widget.TripWidget
-import fr.ontime.app.widget.WidgetOptions
-import fr.ontime.app.widget.WidgetSettings
 import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen() {
     val context = LocalContext.current.applicationContext
-    val settings = remember { WidgetSettings(context) }
+    val settings = remember { DisplaySettings(context) }
     var options by remember { mutableStateOf(settings.read()) }
     val scope = rememberCoroutineScope()
 
-    fun change(updated: WidgetOptions) {
+    fun change(updated: DisplayOptions) {
         options = updated
         settings.write(updated)
         scope.launch { TripWidget().updateAll(context) }
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Widget", style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
+        Text("Accueil et widget", style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
         SettingSwitch("Afficher le compte à rebours", options.countdown) { change(options.copy(countdown = it)) }
         SettingSwitch("Afficher l'heure de départ de chez soi", options.leaveTime) { change(options.copy(leaveTime = it)) }
+        Text("Widget", style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
         SettingSwitch("Afficher les trains supprimés", options.cancelled) { change(options.copy(cancelled = it)) }
         Text(
-            "Sans compte à rebours ni heure de départ, le widget affiche l'heure du prochain départ. " +
+            "Le compte à rebours peut aussi être activé ou masqué en touchant ⏱ sur le widget. " +
+                "Sans compte à rebours ni heure de départ, l'heure du prochain départ est affichée. " +
                 "L'accueil signale toujours les suppressions.",
             style = MaterialTheme.typography.bodyMedium,
         )

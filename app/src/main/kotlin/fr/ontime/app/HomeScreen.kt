@@ -14,6 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import fr.ontime.domain.Departure
 import fr.ontime.domain.HomeDepartureCalculator
 import fr.ontime.domain.Mode
@@ -52,6 +57,7 @@ fun HomeScreen(
     onRefresh: () -> Unit,
     reminderNote: String? = null,
     onRemind: ((Departure) -> Unit)? = null,
+    options: DisplayOptions = DisplayOptions(),
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (trip != null) {
@@ -73,7 +79,7 @@ fun HomeScreen(
                 HomeState.Loading -> StateCard("Recherche des horaires…", "Interrogation de la SNCF en cours.")
                 is HomeState.Ready -> {
                     state.cancelled.forEach { CancelledLine(it) }
-                    SelectionContent(state.selection, requireNotNull(trip), clock)
+                    SelectionContent(state.selection, requireNotNull(trip), clock, options)
                 }
             }
         }
@@ -102,9 +108,9 @@ fun HomeScreen(
 }
 
 @Composable
-private fun SelectionContent(selection: Selection, trip: TravelProfile, clock: Clock) {
+private fun SelectionContent(selection: Selection, trip: TravelProfile, clock: Clock, options: DisplayOptions) {
     when (selection.status) {
-        Status.Available -> DepartureCard(requireNotNull(selection.departure), trip, clock)
+        Status.Available -> DepartureCard(requireNotNull(selection.departure), trip, clock, options)
         Status.Empty -> StateCard(
             "Aucun train à prendre",
             "Aucun train direct atteignable n'est annoncé pour ce trajet avec " +
@@ -122,21 +128,34 @@ private fun SelectionContent(selection: Selection, trip: TravelProfile, clock: C
 }
 
 @Composable
-private fun DepartureCard(departure: Departure, trip: TravelProfile, clock: Clock) {
+private fun DepartureCard(departure: Departure, trip: TravelProfile, clock: Clock, options: DisplayOptions) {
     val leave = HomeDepartureCalculator(clock).calculate(departure.departureAt, trip)
-    Text("Partir dans", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
-    Text("${leave.timeUntilLeave.toMinutes()} min", style = MaterialTheme.typography.displayLarge)
-    Text("Quittez la maison à ${TimeFormat.format(leave.leaveAt)}", style = MaterialTheme.typography.titleMedium)
+    // Same choice as the widget: countdown, leave time, or the departure time when both are off.
+    val (heading, figure) = when {
+        options.countdown -> "Partir dans" to "${leave.timeUntilLeave.toMinutes()} min"
+        options.leaveTime -> "Quittez la maison à" to TimeFormat.format(leave.leaveAt)
+        else -> "Prochain départ" to TimeFormat.format(departure.departureAt)
+    }
+    Text(heading, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+    Text(figure, style = MaterialTheme.typography.displayLarge)
+    if (options.countdown && options.leaveTime) {
+        Text("Quittez la maison à ${TimeFormat.format(leave.leaveAt)}", style = MaterialTheme.typography.titleMedium)
+    }
     Text(
-        "${modeLabel(departure.mode)} de ${TimeFormat.format(departure.departureAt)}" +
-            (departure.arrivalAt?.let { ", arrivée ${TimeFormat.format(it)}" } ?: ""),
+        buildAnnotatedString {
+            append("${modeLabel(departure.mode)} de ")
+            // Late: timetabled time struck through, then the corrected time.
+            departure.scheduledAt?.takeIf { departure.delayMinutes != null }?.let {
+                withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) { append(TimeFormat.format(it)) }
+                append(" ")
+            }
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(TimeFormat.format(departure.departureAt)) }
+            departure.arrivalAt?.let { append(", arrivée ${TimeFormat.format(it)}") }
+        },
         style = MaterialTheme.typography.bodyLarge,
     )
     departure.delayMinutes?.let { delay ->
-        Text(
-            "En retard de $delay min (prévu ${TimeFormat.format(requireNotNull(departure.scheduledAt))})",
-            style = MaterialTheme.typography.titleMedium,
-        )
+        Text("En retard de ${formatDelay(delay)}", style = MaterialTheme.typography.titleMedium)
     }
     departure.disruption?.let { Text("Cause : $it", style = MaterialTheme.typography.bodyMedium) }
     Text("Direction ${shortName(departure.destination)}", style = MaterialTheme.typography.bodyMedium)
@@ -166,6 +185,10 @@ private fun walkAndMargin(trip: TravelProfile) =
 
 /** Drops the trailing "(Commune)" the SNCF API appends to stop and destination names. */
 internal fun shortName(name: String): String = name.replace(Regex("""\s*\([^()]*\)\s*$"""), "").ifBlank { name }
+
+/** "10 min" or "3 h 40": readable delay. */
+internal fun formatDelay(minutes: Long): String =
+    if (minutes < 60) "$minutes min" else "${minutes / 60} h ${"%02d".format(minutes % 60)}"
 
 internal fun modeLabel(mode: Mode) = when (mode) {
     Mode.Train -> "Train"
