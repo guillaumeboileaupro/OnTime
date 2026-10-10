@@ -1,9 +1,9 @@
 ---
 name: transport-data
-description: Adapter les donnees SNCF, IDFM et GTFS aux prochains departs multimodaux. Utiliser pour les fournisseurs, horaires, identifiants, cache et perturbations de GadgetTech.
+description: Adapter les donnees SNCF et Lignes d'Azur (GTFS, GTFS-RT, SIRI) aux prochains departs multimodaux. Utiliser pour les fournisseurs, horaires, identifiants, cache et perturbations.
 ---
 
-Lire docs/ANALYSE_ET_PLAN.md depuis la racine du depot.
+Lire docs/ANALYSE_ET_PLAN.md et docs/API_KEYS.md depuis la racine du depot.
 1. Identifier territoire, fournisseur et couverture effective de l'arret.
 2. Verifier la documentation officielle, quotas et attribution avant integration.
 3. Garder provider, stopId, lineId, journeyId, mode, destination, temps absolus,

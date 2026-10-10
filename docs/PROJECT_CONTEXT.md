@@ -4,23 +4,25 @@
 
 Application Android personnelle de prochains departs SNCF, RER, metro et tram,
 widget d'accueil et rappels pour partir de chez soi. Profils, marche et marge.
-Style e-paper, palette UI #dfdcd3/#2a2926, logo fourni preserve sans modification.
+Style e-paper, palette UI #ddd9d0/#282828, logo fourni preserve sans modification.
 La police exacte du logo n'est pas identifiee; ne pas affirmer une equivalence.
 Le SVG actuel integre le PNG original, sans courbes vectorielles.
 
 ## Etat verifie au cadrage
 
-Le code GadgetTech importe est restaure : firmware C++/Arduino, simulateur,
-ecran virtuel USB, outils et tests C++. Le test de selection supprime
-l'extrapolation de passages. Aucun projet Gradle/APK Android ou widget implemente.
-Ne pas prendre les assets ou la documentation pour une application fonctionnelle.
+Cible explicite : Android; Linux comme poste de developpement et CI. Aucun
+ESP32, Arduino, firmware, ecran physique ni materiel dans le build, la CI ou
+l'architecture active. Le code GadgetTech (firmware, simulateur, ecran virtuel,
+outils, tests C++) est archive dans `archive/gadgettech/` comme reference
+historique, ni compile ni teste. Les invariants utiles sont portes dans
+`core-domain/` Kotlin.
 
 ## Architecture cible
 
-Kotlin natif, Compose, Glance; domaine pur, adaptateurs PRIM/SNCF et repository
+Kotlin natif, Compose, Glance; domaine pur, adaptateurs SNCF/Lignes d'Azur et repository
 partage. Room/DataStore proposes pour stockage. Ce sont des choix documentes,
-pas des composants deja installes. Isoler le domaine de Wi-Fi/GPIO/Preferences
-et du rendu historique avant portage. Conserver les references amont.
+pas des composants deja installes. Le domaine reste independant des API Android et
+des vues. Conserver les references amont dans l'archive.
 Pas de calculateur de correspondances ni couverture universelle promis.
 
 ## Preuves et confidentialite

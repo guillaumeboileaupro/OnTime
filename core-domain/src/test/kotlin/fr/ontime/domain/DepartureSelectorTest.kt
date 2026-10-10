@@ -98,6 +98,13 @@ class DepartureSelectorTest {
         assertEquals(
             Status.Error,
             selectNextDeparture(
+                listOf(departure("invalid-direction", 300).copy(directionId = "")), now,
+                Duration.ZERO, Duration.ZERO, Duration.ofSeconds(120),
+            ).status,
+        )
+        assertEquals(
+            Status.Error,
+            selectNextDeparture(
                 listOf(departure("invalid-departure", 300).copy(departureAt = Instant.ofEpochSecond(-1))),
                 now, Duration.ZERO, Duration.ZERO, Duration.ofSeconds(120),
             ).status,
@@ -128,6 +135,7 @@ class DepartureSelectorTest {
         journeyId = id,
         stopId = "demo:stop",
         lineId = "demo:line",
+        directionId = "demo:direction:outbound",
         destination = "Destination fictive",
         mode = Mode.Rer,
         departureAt = now.plusSeconds(secondsFromNow),
@@ -135,4 +143,19 @@ class DepartureSelectorTest {
         quality = quality,
         cancelled = cancelled,
     )
+
+    @Test
+    fun `lists the next reachable departures in order`() {
+        val result = reachableDepartures(
+            listOf(
+                departure("late", 900),
+                departure("missed", 30),
+                departure("cancelled", 400, cancelled = true),
+                departure("first", 300),
+                departure("second", 600),
+            ),
+            now, Duration.ofSeconds(60), Duration.ofSeconds(20), limit = 2,
+        )
+        assertEquals(listOf("first", "second"), result.map { it.journeyId })
+    }
 }

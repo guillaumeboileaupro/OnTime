@@ -19,7 +19,6 @@ local.properties
 .ai-private/
 **/__pycache__/
 *.pyc
-Simulateur/simulateur
-Simulateur/ecran.bmp
-
-ProchainMetro/src/api/cle.h
+archive/gadgettech/Simulateur/simulateur
+archive/gadgettech/Simulateur/ecran.bmp
+archive/gadgettech/ProchainMetro/src/api/cle.h

@@ -1,0 +1,5 @@
+{"journeys": [
+  {"type": "best", "duration": 1224, "tags": ["walking", "non_pt", "non_pt_walking"],
+   "distances": {"walking": 1307, "bike": 0, "car": 0},
+   "sections": [{"type": "street_network", "mode": "walking", "duration": 1224}]}
+]}
