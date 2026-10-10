@@ -19,7 +19,7 @@ historique, ni compile ni teste. Les invariants utiles sont portes dans
 
 ## Architecture cible
 
-Kotlin natif, Compose, Glance; domaine pur, adaptateurs PRIM/SNCF et repository
+Kotlin natif, Compose, Glance; domaine pur, adaptateurs SNCF/Lignes d'Azur et repository
 partage. Room/DataStore proposes pour stockage. Ce sont des choix documentes,
 pas des composants deja installes. Le domaine reste independant des API Android et
 des vues. Conserver les references amont dans l'archive.

@@ -1,45 +1,60 @@
-# Cles d'API et fournisseurs
+# Fournisseurs et cles d'API
 
-Aucune cle n'est requise tant que l'application tourne sur fixtures. Ce guide
-prepare l'integration des fournisseurs (TODO : PRIM et une gare SNCF).
+Reseaux cibles : SNCF (TER, Intercites, TGV) et Lignes d'Azur (bus et tramway
+de la Metropole Nice Cote d'Azur). Aucune cle n'est requise tant que
+l'application tourne sur fixtures. Etat verifie le 2026-10-10 sur
+transport.data.gouv.fr; reverifier avant integration.
 
-## Obtenir les cles
+## Lignes d'Azur
 
-| Fournisseur | Usage | Obtention |
+Jeu `donnees-statiques-et-dynamiques-du-reseau-de-transport-lignes-dazur`,
+Licence Ouverte 2.0.
+
+| Flux | URL | Acces |
 |---|---|---|
-| PRIM (Ile-de-France Mobilites) | Temps reel metro, RER, tram, Transilien (SIRI StopMonitoring) | Compte sur https://prim.iledefrance-mobilites.fr, puis Mon compte > Mes jetons d'authentification > generer une cle |
-| API SNCF (Navitia) | Departs grandes lignes et TER hors IDF | Inscription sur https://numerique.sncf.com/startup/api/ ; la cle arrive par e-mail |
-| Open data IDFM `arrets-lignes` | Recherche d'arrets et de lignes | Sans cle : https://data.iledefrance-mobilites.fr |
+| GTFS statique (arrets, lignes, horaires theoriques) | `https://chouette.enroute.mobi/api/v1/datas/OpendataRLA/gtfs.zip` | Libre, sans cle |
+| GTFS-RT trip updates (protobuf) | `https://ara-api.enroute.mobi/rla/gtfs/trip-updates` | Libre, sans cle |
+| GTFS-RT vehicle positions | `https://ara-api.enroute.mobi/rla/gtfs/vehicle-positions` | Libre, sans cle |
+| SIRI (stop monitoring, estimated timetable) | `https://ara-api.enroute.mobi/rla/siri` | Sur demande : formulaire https://data.lignesdazur.com/demande, `RequestorRef` = `open-data` |
 
-Verifier quotas, conditions d'usage et licence de chaque fournisseur avant
-diffusion.
+- SIRI StopMonitoring donne directement les prochains passages d'un arret :
+  c'est le format le plus simple pour l'application, si l'acces est accorde.
+- Sinon, combiner GTFS-RT trip updates et GTFS statique (identifiants
+  `trip_id`/`stop_id` a rapprocher).
+- Le tramway semble absent du temps reel : l'etiqueter comme theorique.
 
-### Points connus de PRIM
+## SNCF
 
-- Requete : `GET https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef=<arret>`
-  avec l'en-tete `apikey: <cle>`.
-- Le serveur n'accepte que TLS 1.3 avec SNI (sans incidence sur Android recent).
-- Conversion des identifiants open data vers PRIM :
-  - `IDFM:monomodalStopPlace:58572` -> `STIF:StopArea:SP:58572:` (gare RER/train)
-  - `IDFM:22115` -> `STIF:StopPoint:Q:22115:` (quai de metro, un par sens)
-  - ligne `IDFM:C01729` -> `STIF:Line::C01729:`
-- Les reponses des grandes gares depassent 80 Ko.
+| Source | Usage | Acces |
+|---|---|---|
+| API SNCF (Navitia) `https://api.sncf.com/v1/coverage/sncf/stop_areas/<id>/departures` | Prochains departs d'une gare, recherche de gares, perturbations | Cle gratuite : inscription sur https://numerique.sncf.com/startup/api/, recue par e-mail; authentification HTTP basic avec la cle comme utilisateur. Verifier le quota a l'inscription |
+| GTFS-RT national `https://proxy.transport.data.gouv.fr/resource/sncf-gtfs-rt-trip-updates` | Retards, trains des 60 prochaines minutes, mis a jour toutes les 2 min | Libre, sans cle |
+| GTFS statique national (jeu `horaires-sncf`) | Horaires theoriques et identifiants | Libre, sans cle |
 
-## Ou les mettre
+- L'API SNCF par gare est recommandee : une requete par gare, sans charger le
+  flux national.
+- Couverture temps reel garantie seulement pour TGV et Intercites. Les TER de
+  la societe dediee SNCF Voyageurs Sud Azur manquaient au GTFS-RT fin 2024 :
+  verifier sur une vraie gare et etiqueter theorique ce qui n'est pas confirme.
 
-Dans `local.properties` a la racine du depot. Ce fichier est deja ignore par
-Git et ne doit jamais etre commite :
+## Ou mettre les cles
+
+Dans `local.properties` a la racine du depot, deja ignore par Git :
 
 ```properties
 sdk.dir=/home/<vous>/Android/Sdk
-ontime.primApiKey=VOTRE_CLE_PRIM
 ontime.sncfApiKey=VOTRE_CLE_SNCF
 ```
 
-En CI, utiliser des secrets GitHub du meme nom, jamais une valeur en clair dans
-un workflow. Notes, trajets et traces identifiantes restent dans `.ai-private/`.
+Les flux Lignes d'Azur ne demandent pas de cle. En CI, utiliser des secrets
+GitHub, jamais une valeur en clair dans un workflow, et aucun appel reseau
+reel : fixtures anonymisees uniquement. Arrets personnels, trajets et domicile
+restent dans `.ai-private/`, jamais dans Git.
 
-Le raccordement Gradle (lecture de ces proprietes vers la configuration de
-build) sera ajoute par la tranche fournisseur. Une cle embarquee dans un APK
-reste extractible : acceptable pour un usage personnel, pas pour une
-distribution publique.
+Le raccordement Gradle sera ajoute par la tranche fournisseur. Une cle embarquee
+dans un APK reste extractible : acceptable pour un usage personnel uniquement.
+
+## Historique
+
+Le client PRIM (Ile-de-France Mobilites) de GadgetTech est archive dans
+`archive/gadgettech/ProchainMetro/src/api/`; il ne fait pas partie de la cible.

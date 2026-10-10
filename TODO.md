@@ -15,7 +15,8 @@
   cache, doublons et TLS.
 - [x] Issue #3 : initialiser Android Kotlin/Compose et construire un APK debug
   sur fixtures, avec domaine Kotlin pur et quatre etats visibles.
-- [ ] Integrer PRIM et une gare SNCF avec couverture et quotas verifies.
+- [ ] Integrer l'API SNCF et Lignes d'Azur (GTFS-RT ou SIRI) avec couverture et
+  quotas verifies (`docs/API_KEYS.md`).
 - [x] Issue #5 : profils locaux persistants avec CRUD, selection, validation et
   calcul du depart de chez soi sur fixtures.
 - [ ] Issue #5 : favoris fournisseurs, revue accessibilite sur appareil et mode

@@ -15,7 +15,7 @@ L'audit historique reste dans AUDIT_AMONT.md.
    validation de configuration. Le TLS historique reste a securiser.
 5. Porter les invariants testes vers un domaine Kotlin puis construire Android
    avec Compose, cache partage, Glance et rappels avec permissions explicites.
-6. Integrer PRIM, SNCF et sources locales selon couverture verifiee.
+6. Integrer SNCF et Lignes d'Azur selon couverture verifiee (docs/API_KEYS.md).
 
 Les priorites 1 a 3 sont historiques : le domaine utile est porte en Kotlin.
 Chaque passe doit avoir un diff limite et des tests pertinents.
