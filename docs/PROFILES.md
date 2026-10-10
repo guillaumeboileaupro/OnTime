@@ -47,7 +47,8 @@ conservation, puis couvre modification, selection, suppression et stockage
 malforme, y compris un identifiant selectionne stocke avec un type invalide ou
 un profil JSON syntaxiquement valide mais hors contraintes du domaine. Les
 durees doivent etre des entiers JSON exacts : aucune coercition de decimal ou de
-chaine numerique n'est acceptee. Un test sur
+chaine numerique n'est acceptee. Les identites doivent etre de vraies chaines
+JSON; les nombres et autres types ne sont jamais convertis. Un test sur
 emulateur ne remplace pas une observation apres arret force ou redemarrage d'un
 OPPO reel.
 
