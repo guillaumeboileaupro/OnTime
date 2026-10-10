@@ -64,6 +64,7 @@ class LegacyTripMigration(
                 labels.put(result.profile.id, "$origin → ${terminus.second}")
             }
         }
+        (0 until items.length()).mapNotNull { items.optJSONObject(it)?.optString("id") }.forEach(labels::remove)
         legacy.clear()
     }
 

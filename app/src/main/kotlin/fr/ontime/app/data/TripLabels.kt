@@ -5,6 +5,7 @@ import android.content.Context
 interface TripLabelStore {
     fun get(profileId: String): String?
     fun put(profileId: String, label: String)
+    fun remove(profileId: String)
 }
 
 /**
@@ -20,7 +21,7 @@ class TripLabels(context: Context) : TripLabelStore {
         preferences.edit().putString(profileId, label).apply()
     }
 
-    fun remove(profileId: String) {
+    override fun remove(profileId: String) {
         preferences.edit().remove(profileId).apply()
     }
 

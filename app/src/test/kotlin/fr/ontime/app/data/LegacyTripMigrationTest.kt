@@ -27,6 +27,9 @@ class LegacyTripMigrationTest {
         override fun put(profileId: String, label: String) {
             values[profileId] = label
         }
+        override fun remove(profileId: String) {
+            values.remove(profileId)
+        }
     }
 
     private class MemoryRepository : ProfileRepository {
@@ -56,6 +59,7 @@ class LegacyTripMigrationTest {
         val trip = repository.profiles.single()
         assertEquals(TravelProfile("new-1", "stop_area:SNCF:1", "stop_area:SNCF:9", 12, 3), trip)
         assertEquals("Gare A → Terminus (Commune)", labels.get("new-1"))
+        assertNull(labels.get("old-real"))
         assertEquals("/routes/route%3ASNCF%3AR1?disable_geojson=true", path)
         assertNull(legacy.raw)
     }
