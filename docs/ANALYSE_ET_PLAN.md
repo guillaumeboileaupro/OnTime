@@ -1,8 +1,8 @@
 # OnTime - premiere passe de nettoyage
 
-Le code GadgetTech est restaure a la racine. La suppression globale etait une
-mauvaise interpretation du perimetre Android. Les sources sont conservees pour
-une adaptation progressive. L'audit historique reste dans AUDIT_AMONT.md.
+Cible : Android, sous Linux pour le developpement et la CI, sans aucun materiel.
+Le code GadgetTech est archive dans `archive/gadgettech/`, hors build et CI.
+L'audit historique reste dans AUDIT_AMONT.md.
 
 ## Priorites
 
@@ -17,8 +17,8 @@ une adaptation progressive. L'audit historique reste dans AUDIT_AMONT.md.
    avec Compose, cache partage, Glance et rappels avec permissions explicites.
 6. Integrer PRIM, SNCF et sources locales selon couverture verifiee.
 
-Chaque passe doit avoir un diff limite, des tests pertinents et un bilan des
-fonctions conservees. Aucun nouveau retrait global de code source.
+Les priorites 1 a 3 sont historiques : le domaine utile est porte en Kotlin.
+Chaque passe doit avoir un diff limite et des tests pertinents.
 
 ## Logo
 
@@ -30,5 +30,5 @@ complete pour eviter une variante non approuvee.
 
 ## Etat
 
-Aucun APK ni projet Gradle implementé. Tests C++ de selection restaures;
-compilation complete ESP32 non realisee ici faute de dependencies.
+Application Android sur fixtures et profils locaux (PR #12, #13). Le C++ et
+sa CI sont archives; seuls les tests Kotlin et Android sont actifs.

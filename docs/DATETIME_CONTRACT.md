@@ -30,7 +30,6 @@ IANA d'une zone nommee releve d'une tranche ulterieure Android/fournisseur.
 
 ## Portee
 
-Le parseur reste un composant C++ pur et n'est pas encore raccorde a
-`prim.cpp`. Le parseur historique `heureEnSecondes` et le firmware sont
-conserves sans modification dans cette PR dependante. Le port Kotlin devra
-reprendre les memes fixtures et erreurs avant integration Android.
+Le parseur actif est `core-domain` (`DateTimeParser.kt`). La version C++ et
+le firmware sont archives dans `archive/gadgettech/`. Le raccordement aux DTO
+fournisseur reste a faire.

@@ -22,7 +22,10 @@
   hors ligne avec donnees transport reelles.
 - [ ] Widget Glance, instances independantes et fraicheur visible.
 - [ ] Rappels, permissions, annulation/dedup et observation sur OPPO reel.
-- [x] Issue #8 : premiere CI C++ portable sur PR et push vers `main`.
+- [x] Issue #8 : premiere CI C++ portable sur PR et push vers `main`
+  (archivee ensuite avec le code GadgetTech).
+- [ ] Archiver le materiel GadgetTech hors build/CI et documenter les cles
+  d'API (`docs/API_KEYS.md`).
 - [x] Issue #8 : tests Android, build APK debug et artefact CI sans signature de
   production.
 - [x] Issues #3/#8 : lancement instrumente sur emulateur Android 15 en CI,
