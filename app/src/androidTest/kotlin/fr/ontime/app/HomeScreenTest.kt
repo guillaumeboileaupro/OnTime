@@ -1,11 +1,20 @@
 package fr.ontime.app
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import fr.ontime.domain.Departure
 import fr.ontime.domain.Mode
@@ -74,5 +83,29 @@ class HomeScreenTest {
             composeRule.waitForIdle()
             composeRule.onNodeWithText(title).assertIsDisplayed()
         }
+    }
+
+    @Test
+    fun staysReadableWithDoubleFontSizeAndAccessibleTargets() {
+        composeRule.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 2f)) {
+                OnTimeTheme {
+                    androidx.compose.foundation.layout.Column(
+                        androidx.compose.ui.Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()),
+                    ) {
+                        HomeScreen(
+                            HomeState.Ready(Selection(Status.Available, departure), clock.instant()),
+                            trip, "Gare d'essai → Ville d'essai", clock, {}, {},
+                        )
+                    }
+                }
+            }
+        }
+        composeRule.onNode(hasText("Partir dans") and isHeading()).assertExists()
+        composeRule.onNodeWithText("3 min").assertIsDisplayed()
+        composeRule.onNode(hasText("Actualiser") and hasClickAction(), useUnmergedTree = true).assertExists()
+        composeRule.onNode(hasClickAction() and hasText("Actualiser", substring = true))
+            .assertHeightIsAtLeast(48.dp)
     }
 }
