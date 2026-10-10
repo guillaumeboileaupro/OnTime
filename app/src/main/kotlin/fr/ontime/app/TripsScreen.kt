@@ -41,7 +41,6 @@ import fr.ontime.domain.ProfileDraft
 import fr.ontime.domain.ProfileError
 import fr.ontime.domain.ProfileRepository
 import fr.ontime.domain.ProfileSnapshot
-import fr.ontime.domain.Status
 import fr.ontime.domain.TravelProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,8 +48,8 @@ import kotlinx.coroutines.withContext
 
 private val ButtonHeight = Modifier.heightIn(min = 48.dp)
 private const val LABEL_SEPARATOR = " → "
-
-private data class TripChoice(val lineId: String, val directionId: String, val label: String)
+private const val BUSY_MESSAGE = "Trop de recherches rapprochées : réessayez dans un instant."
+private const val ERROR_MESSAGE = "Recherche impossible pour le moment."
 
 @Composable
 fun TripsScreen(
@@ -70,11 +69,13 @@ fun TripsScreen(
     val profiles = (snapshot as? ProfileSnapshot.Data)?.profiles.orEmpty()
     val selectedId = (snapshot as? ProfileSnapshot.Data)?.selectedProfileId
     var editingId by remember { mutableStateOf<String?>(null) }
-    var station by remember { mutableStateOf<NearbyStation?>(null) }
-    var choice by remember { mutableStateOf<TripChoice?>(null) }
-    var query by remember { mutableStateOf("") }
-    var results by remember { mutableStateOf<List<NearbyStation>>(emptyList()) }
-    var choices by remember { mutableStateOf<List<TripChoice>>(emptyList()) }
+    var origin by remember { mutableStateOf<NearbyStation?>(null) }
+    var destination by remember { mutableStateOf<NearbyStation?>(null) }
+    var originQuery by remember { mutableStateOf("") }
+    var originResults by remember { mutableStateOf<List<NearbyStation>>(emptyList()) }
+    var destinationQuery by remember { mutableStateOf("") }
+    var destinationResults by remember { mutableStateOf<List<NearbyStation>>(emptyList()) }
+    var directions by remember { mutableStateOf<List<NearbyStation>>(emptyList()) }
     var walking by remember { mutableStateOf("10") }
     var margin by remember { mutableStateOf("2") }
     var message by remember { mutableStateOf<String?>(null) }
@@ -85,43 +86,48 @@ fun TripsScreen(
 
     fun reset() {
         editingId = null
-        station = null
-        choice = null
-        choices = emptyList()
-        results = emptyList()
+        origin = null
+        destination = null
+        originQuery = ""
+        destinationQuery = ""
+        originResults = emptyList()
+        destinationResults = emptyList()
+        directions = emptyList()
         walking = "10"
         margin = "2"
     }
 
     fun load(profile: TravelProfile) {
         val label = labels.get(profile.id).orEmpty()
+        reset()
         editingId = profile.id
-        station = NearbyStation(profile.stopId, label.substringBefore(LABEL_SEPARATOR).ifBlank { "Gare enregistrée" })
-        choice = TripChoice(profile.lineId, profile.direction, label.substringAfter(LABEL_SEPARATOR, "Direction enregistrée"))
-        choices = emptyList()
+        origin = NearbyStation(profile.stopId, label.substringBefore(LABEL_SEPARATOR).ifBlank { "Gare enregistrée" })
+        destination = NearbyStation(profile.destinationId, label.substringAfter(LABEL_SEPARATOR, "Destination enregistrée"))
         walking = profile.walkingMinutes.toString()
         margin = profile.marginMinutes.toString()
     }
 
-    fun chooseStation(found: NearbyStation) {
-        station = found
-        choice = null
-        choices = emptyList()
-        results = emptyList()
-    }
-
-    fun loadDirections(stopId: String) {
+    fun runLookup(lookup: () -> StationSearchResult, onFound: (List<NearbyStation>) -> Unit) {
         busy = true
         scope.launch {
-            val snapshotAtStop = withContext(Dispatchers.IO) { sncf.departures.fetch(stopId) }
+            val result = withContext(Dispatchers.IO) { lookup() }
             busy = false
-            choices = snapshotAtStop.departures
-                .distinctBy { it.lineId to it.directionId }
-                .map { TripChoice(it.lineId, it.directionId, "${modeLabel(it.mode)}$LABEL_SEPARATOR${it.destination}") }
-            when {
-                snapshotAtStop.status == Status.Error -> message = "Impossible de charger les directions."
-                choices.isEmpty() -> message = "Aucun train annoncé dans cette gare pour le moment."
+            when (result) {
+                is StationSearchResult.Found -> onFound(result.stations)
+                StationSearchResult.Busy -> message = BUSY_MESSAGE
+                StationSearchResult.Error -> message = ERROR_MESSAGE
             }
+        }
+    }
+
+    fun chooseOrigin(station: NearbyStation) {
+        origin = station
+        originResults = emptyList()
+        destination = null
+        directions = emptyList()
+        runLookup({ sncf.search.directionsFrom(station.stopAreaId) }) { found ->
+            directions = found
+            if (found.isEmpty()) message = "Aucune ligne SNCF connue depuis cette gare."
         }
     }
 
@@ -139,32 +145,15 @@ fun TripsScreen(
                 busy = false
                 message = when (result) {
                     is NearestStationResult.Found -> {
-                        chooseStation(result.station)
                         walking = result.walkingMinutes.toString()
-                        loadDirections(result.station.stopAreaId)
+                        chooseOrigin(result.station)
                         "${result.walkingMinutes} min à pied (${result.walkingMeters} m) d'après l'itinéraire SNCF."
                     }
                     NearestStationResult.NoStation -> "Aucune gare SNCF à moins de 3 km."
                     NearestStationResult.TooFar -> "Gare trop éloignée à pied (plus de 3 h)."
-                    NearestStationResult.Busy -> "Trop de recherches rapprochées : réessayez dans un instant."
-                    NearestStationResult.Error -> "Recherche impossible pour le moment."
+                    NearestStationResult.Busy -> BUSY_MESSAGE
+                    NearestStationResult.Error -> ERROR_MESSAGE
                 }
-            }
-        }
-    }
-
-    fun searchByName() {
-        busy = true
-        scope.launch {
-            val result = withContext(Dispatchers.IO) { sncf.search.search(query) }
-            busy = false
-            when (result) {
-                is StationSearchResult.Found -> {
-                    results = result.stations
-                    message = if (result.stations.isEmpty()) "Aucune gare trouvée." else null
-                }
-                StationSearchResult.Busy -> message = "Trop de recherches rapprochées : réessayez dans un instant."
-                StationSearchResult.Error -> message = "Recherche impossible pour le moment."
             }
         }
     }
@@ -196,7 +185,7 @@ fun TripsScreen(
                 modifier = Modifier.fillMaxWidth().then(ButtonHeight),
             ) {
                 Text(
-                    "${if (selected) "● " else "○ "}${labels.get(profile.id) ?: "Trajet sans nom"}",
+                    "${if (selected) "● " else "○ "}${labels.get(profile.id)?.let(::shortLabel) ?: "Trajet sans nom"}",
                     style = MaterialTheme.typography.labelLarge,
                 )
             }
@@ -213,7 +202,7 @@ fun TripsScreen(
             )
 
             StepTitle("1. Gare de départ")
-            station?.let { Text("Gare : ${it.name}", style = MaterialTheme.typography.bodyLarge) }
+            origin?.let { Text("Départ : ${shortName(it.name)}", style = MaterialTheme.typography.bodyLarge) }
             Button(
                 enabled = !busy,
                 onClick = {
@@ -223,49 +212,38 @@ fun TripsScreen(
                 },
                 modifier = Modifier.fillMaxWidth().then(ButtonHeight),
             ) { Text("Gare la plus proche de moi", style = MaterialTheme.typography.labelLarge) }
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                label = { Text("Ou rechercher une gare") },
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyLarge,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { if (!busy) searchByName() }),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            OutlinedButton(
-                enabled = !busy && query.trim().length >= 2,
-                onClick = { searchByName() },
-                modifier = Modifier.fillMaxWidth().then(ButtonHeight),
-            ) { Text("Rechercher", style = MaterialTheme.typography.labelLarge) }
-            results.forEach { found ->
-                OutlinedButton(
-                    onClick = {
-                        chooseStation(found)
-                        loadDirections(found.stopAreaId)
-                    },
-                    modifier = Modifier.fillMaxWidth().then(ButtonHeight),
-                ) { Text(found.name, style = MaterialTheme.typography.labelLarge) }
-            }
-
-            StepTitle("2. Direction")
-            val currentStation = station
-            when {
-                currentStation == null -> Text("Choisissez d'abord une gare.", style = MaterialTheme.typography.bodyMedium)
-                choices.isEmpty() -> {
-                    choice?.let { Text("Direction : ${it.label}", style = MaterialTheme.typography.bodyLarge) }
-                    OutlinedButton(
-                        enabled = !busy,
-                        onClick = { loadDirections(currentStation.stopAreaId) },
-                        modifier = Modifier.fillMaxWidth().then(ButtonHeight),
-                    ) { Text("Voir les directions", style = MaterialTheme.typography.labelLarge) }
+            StationSearchField("Ou rechercher la gare de départ", originQuery, busy, { originQuery = it }) {
+                runLookup({ sncf.search.search(originQuery) }) { found ->
+                    originResults = found
+                    message = if (found.isEmpty()) "Aucune gare trouvée." else null
                 }
-                else -> choices.forEach { candidate ->
-                    val picked = candidate == choice
-                    OutlinedButton(
-                        onClick = { choice = candidate },
-                        modifier = Modifier.fillMaxWidth().then(ButtonHeight),
-                    ) { Text("${if (picked) "● " else "○ "}${candidate.label}", style = MaterialTheme.typography.labelLarge) }
+            }
+            originResults.forEach { StationButton(it.name) { chooseOrigin(it) } }
+
+            StepTitle("2. Destination")
+            val start = origin
+            if (start == null) {
+                Text("Choisissez d'abord la gare de départ.", style = MaterialTheme.typography.bodyMedium)
+            } else {
+                destination?.let { Text("Arrivée : ${shortName(it.name)}", style = MaterialTheme.typography.bodyLarge) }
+                if (directions.isNotEmpty()) {
+                    Text("Toutes les directions depuis cette gare :", style = MaterialTheme.typography.bodyMedium)
+                    directions.forEach { candidate ->
+                        val picked = candidate.stopAreaId == destination?.stopAreaId
+                        StationButton("${if (picked) "● " else "○ "}${shortName(candidate.name)}") { destination = candidate }
+                    }
+                }
+                StationSearchField("Ou rechercher la gare d'arrivée", destinationQuery, busy, { destinationQuery = it }) {
+                    runLookup({ sncf.search.search(destinationQuery) }) { found ->
+                        destinationResults = found.filter { it.stopAreaId != start.stopAreaId }
+                        message = if (destinationResults.isEmpty()) "Aucune gare trouvée." else null
+                    }
+                }
+                destinationResults.forEach { candidate ->
+                    StationButton(candidate.name) {
+                        destination = candidate
+                        destinationResults = emptyList()
+                    }
                 }
             }
 
@@ -275,23 +253,21 @@ fun TripsScreen(
                 NumberField("Marge (min)", margin, Modifier.weight(1f)) { margin = it }
             }
 
-            val ready = station != null && choice != null
             Button(
-                enabled = ready && !busy,
+                enabled = origin != null && destination != null && !busy,
                 onClick = {
-                    val chosenStation = requireNotNull(station)
-                    val chosenDirection = requireNotNull(choice)
+                    val from = requireNotNull(origin)
+                    val to = requireNotNull(destination)
                     val draft = ProfileDraft(
-                        stopId = chosenStation.stopAreaId,
-                        lineId = chosenDirection.lineId,
-                        direction = chosenDirection.directionId,
+                        stopId = from.stopAreaId,
+                        destinationId = to.stopAreaId,
                         walkingMinutes = walking.toIntOrNull() ?: -1,
                         marginMinutes = margin.toIntOrNull() ?: -1,
                     )
                     val result = editingId?.let { repository.update(it, draft) } ?: repository.create(draft)
                     message = when (result) {
                         is ProfileChange.Success -> {
-                            labels.put(result.profile.id, "${chosenStation.name}$LABEL_SEPARATOR${chosenDirection.label.substringAfter(LABEL_SEPARATOR)}")
+                            labels.put(result.profile.id, "${shortName(from.name)}$LABEL_SEPARATOR${shortName(to.name)}")
                             val selection = repository.select(result.profile.id)
                             onChanged()
                             reset()
@@ -344,10 +320,48 @@ private fun StepTitle(text: String) {
     Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
 }
 
+@Composable
+private fun StationButton(text: String, onClick: () -> Unit) {
+    OutlinedButton(onClick = onClick, modifier = Modifier.fillMaxWidth().then(ButtonHeight)) {
+        Text(text, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+@Composable
+private fun StationSearchField(
+    label: String,
+    query: String,
+    busy: Boolean,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
+) {
+    val canSearch = !busy && query.trim().length >= 2
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        label = { Text(label) },
+        singleLine = true,
+        textStyle = MaterialTheme.typography.bodyLarge,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { if (canSearch) onSearch() }),
+        modifier = Modifier.fillMaxWidth(),
+    )
+    OutlinedButton(
+        enabled = canSearch,
+        onClick = onSearch,
+        modifier = Modifier.fillMaxWidth().then(ButtonHeight),
+    ) { Text("Rechercher", style = MaterialTheme.typography.labelLarge) }
+}
+
+/** Shortens every part of a saved "Departure → Arrival" label. */
+internal fun shortLabel(label: String) =
+    label.split(LABEL_SEPARATOR).joinToString(LABEL_SEPARATOR) { shortName(it) }
+
 private fun ProfileError.explanation() = when (this) {
     ProfileError.InvalidId -> "Identifiant invalide."
-    ProfileError.EmptyStop -> "Choisissez une gare."
-    ProfileError.EmptyLine, ProfileError.EmptyDirection -> "Choisissez une direction."
+    ProfileError.EmptyStop -> "Choisissez la gare de départ."
+    ProfileError.EmptyDestination -> "Choisissez la destination."
+    ProfileError.SameStopAndDestination -> "La destination doit être différente du départ."
     ProfileError.InvalidWalking -> "Marche : entre 0 et 180 min."
     ProfileError.InvalidMargin -> "Marge : entre 0 et 60 min."
 }

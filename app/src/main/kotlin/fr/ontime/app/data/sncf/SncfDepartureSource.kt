@@ -19,18 +19,30 @@ class SncfDepartureSource(
 ) {
     private val cache = mutableMapOf<String, List<Departure>>()
 
-    @Synchronized
-    fun fetch(stopAreaId: String): SncfSnapshot {
-        if (!budget.tryAcquire(clock.instant())) {
-            return cache[stopAreaId]?.let(::available) ?: SncfSnapshot(Status.Stale)
-        }
+    /** Next departures at a stop area, all lines and directions. */
+    fun fetch(stopAreaId: String): SncfSnapshot = load(stopAreaId) { api, now ->
         val response = api.get(
             "/stop_areas/${encodeSegment(stopAreaId)}/departures?count=10&data_freshness=realtime&disable_geojson=true",
         )
-        if (response !is SncfResponse.Body) return SncfSnapshot(Status.Error)
-        val departures = parseSncfDepartures(response.json, clock.instant())
-            ?: return SncfSnapshot(Status.Error)
-        cache[stopAreaId] = departures
+        (response as? SncfResponse.Body)?.let { parseSncfDepartures(it.json, now) }
+    }
+
+    /** Next direct trains from [originId] to [destinationId], with arrival times. */
+    fun fetchTrip(originId: String, destinationId: String): SncfSnapshot = load("$originId>$destinationId") { api, now ->
+        val response = api.get(
+            "/journeys?from=${encodeSegment(originId)}&to=${encodeSegment(destinationId)}" +
+                "&max_nb_transfers=0&count=5&data_freshness=realtime&disable_geojson=true",
+        )
+        (response as? SncfResponse.Body)?.let { parseSncfJourneys(it.json, originId, now) }
+    }
+
+    @Synchronized
+    private fun load(key: String, request: (SncfApi, java.time.Instant) -> List<Departure>?): SncfSnapshot {
+        if (!budget.tryAcquire(clock.instant())) {
+            return cache[key]?.let(::available) ?: SncfSnapshot(Status.Stale)
+        }
+        val departures = request(api, clock.instant()) ?: return SncfSnapshot(Status.Error)
+        cache[key] = departures
         return available(departures)
     }
 

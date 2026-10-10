@@ -24,4 +24,22 @@ class StationSearch(
             ?: return StationSearchResult.Error
         return StationSearchResult.Found(stations)
     }
+
+    /** Every terminus served from [stopAreaId], all lines included, sorted by name. */
+    fun directionsFrom(stopAreaId: String): StationSearchResult {
+        if (!budget.tryAcquire(clock.instant())) return StationSearchResult.Busy
+        val response = api.get("/stop_areas/${encodeSegment(stopAreaId)}/routes?count=200&disable_geojson=true")
+        val directions = (response as? SncfResponse.Body)?.let { parseRouteDirections(it.json, stopAreaId) }
+            ?: return StationSearchResult.Error
+        return StationSearchResult.Found(directions)
+    }
 }
+
+internal fun parseRouteDirections(body: String, originId: String): List<NearbyStation>? = runCatching {
+    val routes = org.json.JSONObject(body).optJSONArray("routes") ?: return@runCatching emptyList()
+    (0 until routes.length()).map { routes.getJSONObject(it).getJSONObject("direction") }
+        .filter { it.optString("embedded_type") == "stop_area" && it.getString("id") != originId }
+        .map { NearbyStation(it.getString("id"), it.getString("name")) }
+        .distinctBy { it.stopAreaId }
+        .sortedBy { it.name }
+}.getOrNull()

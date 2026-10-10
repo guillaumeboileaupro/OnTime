@@ -26,19 +26,20 @@ class HomeScreenTest {
     val composeRule = createComposeRule()
 
     private val clock = Clock.fixed(Instant.parse("2026-10-09T06:30:00Z"), ZoneOffset.UTC)
-    private val trip = TravelProfile("trip", "stop_area:TEST:1", "line:TEST:1", "route:TEST:1", 7, 2)
+    private val trip = TravelProfile("trip", "stop_area:TEST:1", "stop_area:TEST:2", 7, 2)
     private val departure = Departure(
         provider = "test",
         journeyId = "journey:TEST:1",
         stopId = trip.stopId,
-        lineId = trip.lineId,
-        directionId = trip.direction,
+        lineId = "line:TEST:1",
+        directionId = "route:TEST:1",
         destination = "Ville d'essai",
         mode = Mode.Train,
         departureAt = Instant.parse("2026-10-09T06:42:00Z"),
         fetchedAt = clock.instant(),
         quality = Quality.Realtime,
         cancelled = false,
+        arrivalAt = Instant.parse("2026-10-09T07:09:00Z"),
     )
 
     @Test
@@ -54,7 +55,8 @@ class HomeScreenTest {
         composeRule.onNodeWithText("Gare d'essai → Ville d'essai").assertIsDisplayed()
         composeRule.onNodeWithText("3 min").assertIsDisplayed()
         composeRule.onNodeWithText("Quittez la maison à 08:33").assertIsDisplayed()
-        composeRule.onNodeWithText("Train de 08:42 → Ville d'essai").assertIsDisplayed()
+        composeRule.onNodeWithText("Train de 08:42, arrivée 09:09").assertIsDisplayed()
+        composeRule.onNodeWithText("Direction Ville d'essai").assertIsDisplayed()
     }
 
     @Test

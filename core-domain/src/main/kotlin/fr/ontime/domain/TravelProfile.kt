@@ -7,21 +7,19 @@ import java.time.Instant
 data class TravelProfile(
     val id: String,
     val stopId: String,
-    val lineId: String,
-    val direction: String,
+    val destinationId: String,
     val walkingMinutes: Int,
     val marginMinutes: Int,
 )
 
 data class ProfileDraft(
     val stopId: String,
-    val lineId: String,
-    val direction: String,
+    val destinationId: String,
     val walkingMinutes: Int,
     val marginMinutes: Int,
 )
 
-enum class ProfileError { InvalidId, EmptyStop, EmptyLine, EmptyDirection, InvalidWalking, InvalidMargin }
+enum class ProfileError { InvalidId, EmptyStop, EmptyDestination, SameStopAndDestination, InvalidWalking, InvalidMargin }
 
 sealed interface ProfileChange {
     data class Success(val profile: TravelProfile) : ProfileChange
@@ -47,8 +45,8 @@ interface ProfileRepository {
 
 fun ProfileDraft.validationErrors(): Set<ProfileError> = buildSet {
     if (stopId.isBlank()) add(ProfileError.EmptyStop)
-    if (lineId.isBlank()) add(ProfileError.EmptyLine)
-    if (direction.isBlank()) add(ProfileError.EmptyDirection)
+    if (destinationId.isBlank()) add(ProfileError.EmptyDestination)
+    if (stopId.isNotBlank() && stopId.trim() == destinationId.trim()) add(ProfileError.SameStopAndDestination)
     if (walkingMinutes !in 0..MAX_WALKING_MINUTES) add(ProfileError.InvalidWalking)
     if (marginMinutes !in 0..60) add(ProfileError.InvalidMargin)
 }
@@ -61,8 +59,7 @@ fun ProfileDraft.toProfile(id: String): ProfileChange {
         TravelProfile(
             id = id,
             stopId = stopId.trim(),
-            lineId = lineId.trim(),
-            direction = direction.trim(),
+            destinationId = destinationId.trim(),
             walkingMinutes = walkingMinutes,
             marginMinutes = marginMinutes,
         ),

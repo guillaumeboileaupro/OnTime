@@ -39,7 +39,7 @@ class SharedPreferencesProfileRepositoryTest {
         assertTrue(restarted.update("profile-2", draft("C")) is ProfileChange.Success)
 
         val restartedAgain = SharedPreferencesProfileRepository(context)
-        assertEquals("C", (restartedAgain.snapshot() as ProfileSnapshot.Data).profiles.last().lineId)
+        assertEquals("C", (restartedAgain.snapshot() as ProfileSnapshot.Data).profiles.last().destinationId)
         assertEquals(ProfileCommandResult.Success, restartedAgain.delete("profile-2"))
         assertEquals("profile-1", (restartedAgain.snapshot() as ProfileSnapshot.Data).selectedProfileId)
         assertEquals(ProfileCommandResult.NotFound, restartedAgain.select("missing"))
@@ -69,7 +69,7 @@ class SharedPreferencesProfileRepositoryTest {
 
     @Test
     fun validJsonWithInvalidDomainValuesIsReportedAndPreserved() {
-        val invalid = """[{"id":"bad","stopId":"demo:stop","lineId":"A","direction":"out","walkingMinutes":-20,"marginMinutes":2}]"""
+        val invalid = """[{"id":"bad","stopId":"demo:stop","destinationId":"A","walkingMinutes":-20,"marginMinutes":2}]"""
         val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
         assertTrue(preferences.edit().putString("profiles", invalid).commit())
         val repository = SharedPreferencesProfileRepository(context) { "profile-1" }
@@ -81,7 +81,7 @@ class SharedPreferencesProfileRepositoryTest {
 
     @Test
     fun duplicateProfileIdsAreReportedAndPreserved() {
-        val duplicate = """[{"id":"same","stopId":"s1","lineId":"l1","direction":"d1","walkingMinutes":1,"marginMinutes":1},{"id":"same","stopId":"s2","lineId":"l2","direction":"d2","walkingMinutes":2,"marginMinutes":2}]"""
+        val duplicate = """[{"id":"same","stopId":"s1","destinationId":"l1","walkingMinutes":1,"marginMinutes":1},{"id":"same","stopId":"s2","destinationId":"l2","walkingMinutes":2,"marginMinutes":2}]"""
         val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
         assertTrue(preferences.edit().putString("profiles", duplicate).commit())
         val repository = SharedPreferencesProfileRepository(context) { "profile-1" }
@@ -98,7 +98,7 @@ class SharedPreferencesProfileRepositoryTest {
 
         assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
         val snapshot = repository.snapshot() as ProfileSnapshot.Data
-        assertEquals(listOf("A"), snapshot.profiles.map { it.lineId })
+        assertEquals(listOf("A"), snapshot.profiles.map { it.destinationId })
     }
 
     @Test
@@ -120,11 +120,11 @@ class SharedPreferencesProfileRepositoryTest {
     @Test
     fun fractionalOrStringDurationsAreRejectedWithoutCoercion() {
         val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
-        val fractional = """[{"id":"bad","stopId":"s","lineId":"l","direction":"d","walkingMinutes":-0.5,"marginMinutes":2}]"""
+        val fractional = """[{"id":"bad","stopId":"s","destinationId":"l","walkingMinutes":-0.5,"marginMinutes":2}]"""
         assertTrue(preferences.edit().putString("profiles", fractional).commit())
         assertEquals(ProfileSnapshot.StorageError, SharedPreferencesProfileRepository(context).snapshot())
 
-        val numericString = """[{"id":"bad","stopId":"s","lineId":"l","direction":"d","walkingMinutes":"7","marginMinutes":2}]"""
+        val numericString = """[{"id":"bad","stopId":"s","destinationId":"l","walkingMinutes":"7","marginMinutes":2}]"""
         assertTrue(preferences.edit().putString("profiles", numericString).commit())
         assertEquals(ProfileSnapshot.StorageError, SharedPreferencesProfileRepository(context).snapshot())
         assertEquals(numericString, preferences.getString("profiles", null))
@@ -132,7 +132,7 @@ class SharedPreferencesProfileRepositoryTest {
 
     @Test
     fun nonStringIdentityIsRejectedWithoutCoercion() {
-        val invalid = """[{"id":"bad","stopId":123,"lineId":"l","direction":"d","walkingMinutes":7,"marginMinutes":2}]"""
+        val invalid = """[{"id":"bad","stopId":123,"destinationId":"l","walkingMinutes":7,"marginMinutes":2}]"""
         val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
         assertTrue(preferences.edit().putString("profiles", invalid).commit())
         val repository = SharedPreferencesProfileRepository(context)
@@ -158,7 +158,7 @@ class SharedPreferencesProfileRepositoryTest {
     @Test
     fun nonCanonicalJsonIsRejectedAndPreserved() {
         val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
-        val fields = "\"stopId\":\"s\",\"lineId\":\"l\",\"direction\":\"d\",\"walkingMinutes\":7,\"marginMinutes\":2"
+        val fields = "\"stopId\":\"s\",\"destinationId\":\"l\",\"walkingMinutes\":7,\"marginMinutes\":2"
         listOf(
             "[{id:\"p\",$fields}]",
             "[{'id':'p',$fields}]",
@@ -178,8 +178,7 @@ class SharedPreferencesProfileRepositoryTest {
 
     private fun draft(line: String) = ProfileDraft(
         stopId = "demo:stop",
-        lineId = line,
-        direction = "Direction fictive",
+        destinationId = line,
         walkingMinutes = 7,
         marginMinutes = 2,
     )

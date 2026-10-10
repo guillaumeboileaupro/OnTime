@@ -85,7 +85,7 @@ private fun SelectionContent(selection: Selection, trip: TravelProfile, clock: C
         Status.Available -> DepartureCard(requireNotNull(selection.departure), trip, clock)
         Status.Empty -> StateCard(
             "Aucun train à prendre",
-            "Aucun départ de ce trajet n'est atteignable dans les prochaines heures avec " +
+            "Aucun train direct atteignable n'est annoncé pour ce trajet avec " +
                 "${walkAndMargin(trip)}.",
         )
         Status.Stale -> StateCard(
@@ -106,9 +106,11 @@ private fun DepartureCard(departure: Departure, trip: TravelProfile, clock: Cloc
     Text("${leave.timeUntilLeave.toMinutes()} min", style = MaterialTheme.typography.displayLarge)
     Text("Quittez la maison à ${TimeFormat.format(leave.leaveAt)}", style = MaterialTheme.typography.titleMedium)
     Text(
-        "${modeLabel(departure.mode)} de ${TimeFormat.format(departure.departureAt)} → ${departure.destination}",
+        "${modeLabel(departure.mode)} de ${TimeFormat.format(departure.departureAt)}" +
+            (departure.arrivalAt?.let { ", arrivée ${TimeFormat.format(it)}" } ?: ""),
         style = MaterialTheme.typography.bodyLarge,
     )
+    Text("Direction ${shortName(departure.destination)}", style = MaterialTheme.typography.bodyMedium)
     Text("${qualityLabel(departure.quality)} · ${walkAndMargin(trip)}", style = MaterialTheme.typography.bodyMedium)
 }
 
@@ -120,6 +122,9 @@ private fun StateCard(title: String, detail: String) {
 
 private fun walkAndMargin(trip: TravelProfile) =
     "${trip.walkingMinutes} min de marche + ${trip.marginMinutes} min de marge"
+
+/** Drops the trailing "(Commune)" the SNCF API appends to stop and destination names. */
+internal fun shortName(name: String): String = name.replace(Regex("""\s*\([^()]*\)\s*$"""), "").ifBlank { name }
 
 internal fun modeLabel(mode: Mode) = when (mode) {
     Mode.Train -> "Train"

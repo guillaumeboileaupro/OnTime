@@ -114,13 +114,13 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
             else -> {
                 if (homeState !is HomeState.Ready) homeState = HomeState.Loading
                 while (true) {
-                    val fetched = withContext(Dispatchers.IO) { sncf.departures.fetch(trip.stopId) }
+                    val fetched = withContext(Dispatchers.IO) {
+                        sncf.departures.fetchTrip(trip.stopId, trip.destinationId)
+                    }
                     val now = clock.instant()
                     homeState = HomeState.Ready(
                         selectNextDeparture(
-                            departures = fetched.departures.filter {
-                                it.lineId == trip.lineId && it.directionId == trip.direction
-                            },
+                            departures = fetched.departures,
                             now = now,
                             walking = Duration.ofMinutes(trip.walkingMinutes.toLong()),
                             margin = Duration.ofMinutes(trip.marginMinutes.toLong()),
@@ -152,7 +152,7 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
                     painter = painterResource(R.drawable.ontime_logo),
                     contentDescription = "OnTime",
                     contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxWidth().height(96.dp).padding(vertical = 12.dp),
+                    modifier = Modifier.fillMaxWidth().height(160.dp).padding(vertical = 16.dp),
                 )
                 HorizontalDivider(color = Ink)
                 Screen.entries.forEach { target ->
@@ -193,7 +193,7 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
                     Screen.Home -> HomeScreen(
                         state = homeState,
                         trip = trip,
-                        tripLabel = trip?.let { labels.get(it.id) },
+                        tripLabel = trip?.let { labels.get(it.id) }?.let(::shortLabel),
                         clock = clock,
                         onOpenTrips = { screen = Screen.Trips },
                         onRefresh = { refresh += 1 },

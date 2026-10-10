@@ -39,8 +39,7 @@ fun parseSncfDepartures(body: String, fetchedAt: Instant): List<Departure>? = ru
                     directionId = route.getString("id"),
                     destination = item.getJSONObject("display_informations").getString("direction"),
                     mode = mode,
-                    departureAt = LocalDateTime.parse(stopTime.getString("departure_date_time"), NAVITIA_DATE_TIME)
-                        .atZone(zone).toInstant(),
+                    departureAt = localInstant(stopTime.getString("departure_date_time"), zone),
                     fetchedAt = fetchedAt,
                     quality = if (stopTime.optString("data_freshness") == "realtime") {
                         Quality.Realtime
@@ -53,6 +52,46 @@ fun parseSncfDepartures(body: String, fetchedAt: Instant): List<Departure>? = ru
         }
     }
 }.getOrNull()
+
+/**
+ * Maps a Navitia `/journeys` body restricted to direct trains to departures from
+ * the origin, with their arrival at the destination. Journeys that are not a
+ * single train section, or use an unsupported mode, are skipped.
+ */
+fun parseSncfJourneys(body: String, originStopAreaId: String, fetchedAt: Instant): List<Departure>? = runCatching {
+    val root = JSONObject(body)
+    val zone = ZoneId.of(root.getJSONObject("context").getString("timezone"))
+    val journeys = root.optJSONArray("journeys") ?: return@runCatching emptyList()
+    buildList {
+        for (index in 0 until journeys.length()) {
+            val sections = journeys.getJSONObject(index).getJSONArray("sections")
+            val trains = (0 until sections.length()).map { sections.getJSONObject(it) }
+                .filter { it.getString("type") == "public_transport" }
+            val train = trains.singleOrNull() ?: continue
+            val links = train.getJSONArray("links")
+            val mode = links.linkId("physical_mode")?.let(::toMode) ?: continue
+            add(
+                Departure(
+                    provider = SNCF_PROVIDER,
+                    journeyId = requireNotNull(links.linkId("vehicle_journey")),
+                    stopId = originStopAreaId,
+                    lineId = requireNotNull(links.linkId("line")),
+                    directionId = requireNotNull(links.linkId("route")),
+                    destination = train.getJSONObject("display_informations").getString("direction"),
+                    mode = mode,
+                    departureAt = localInstant(train.getString("departure_date_time"), zone),
+                    fetchedAt = fetchedAt,
+                    quality = if (train.optString("data_freshness") == "realtime") Quality.Realtime else Quality.Scheduled,
+                    cancelled = false,
+                    arrivalAt = localInstant(train.getString("arrival_date_time"), zone),
+                ),
+            )
+        }
+    }
+}.getOrNull()
+
+private fun localInstant(value: String, zone: ZoneId): Instant =
+    LocalDateTime.parse(value, NAVITIA_DATE_TIME).atZone(zone).toInstant()
 
 private fun JSONArray.linkId(type: String): String? {
     for (index in 0 until length()) {
