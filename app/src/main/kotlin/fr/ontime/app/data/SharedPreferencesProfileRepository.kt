@@ -10,6 +10,7 @@ import fr.ontime.domain.TravelProfile
 import fr.ontime.domain.toProfile
 import org.json.JSONArray
 import org.json.JSONObject
+import org.json.JSONTokener
 import java.util.UUID
 
 class SharedPreferencesProfileRepository(
@@ -73,7 +74,9 @@ class SharedPreferencesProfileRepository(
     }
 
     private fun readData(): ProfileSnapshot.Data? = runCatching {
-        val array = JSONArray(preferences.getString(KEY_PROFILES, "[]"))
+        val tokener = JSONTokener(preferences.getString(KEY_PROFILES, "[]"))
+        val array = tokener.nextValue()
+        require(array is JSONArray && tokener.nextClean().code == 0)
         val profiles = buildList {
             repeat(array.length()) { index ->
                 val item = array.getJSONObject(index)
