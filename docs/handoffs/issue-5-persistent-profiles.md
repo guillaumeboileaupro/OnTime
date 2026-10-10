@@ -4,7 +4,7 @@
   humaine ou Claude independante revendiquee.
 - Branche, base et HEAD : `feat/issue-5-persistent-profiles`, dependante de la
   PR #12 au SHA exact `4d9d347ea2884e29cb06ccb1d73c5cd9fc52179b`.
-  Implementation corrigee au SHA `923818b`;
+  Implementation corrigee au SHA `8147328`;
   le commit documentaire qui contient cette passation est le HEAD final reporte
   dans la description de PR.
 - PR et perimetre : `Refs #5`; profils sur fixtures uniquement, aucun merge,
@@ -57,8 +57,9 @@
   compatible, de propager les echecs `commit()`, d'utiliser l'identifiant fixture
   canonique, de distinguer une lecture corrompue d'une liste vide, de rejeter un
   depart manque selon le profil, de proteger le type de l'identifiant selectionne,
-  de revalider les profils deserialises et de comparer l'identite de direction.
-  Les huit retours sont corriges et testes; une derniere revue vise le HEAD final. Une
+  de revalider les profils deserialises, de comparer l'identite de direction,
+  d'interdire une direction vide et de refuser les identifiants de profil dupliques.
+  Les dix retours sont corriges et testes; une derniere revue vise le HEAD final. Une
   revue independante humaine/Claude reste a faire.
 - Prochaine action : Guillaume valide d'abord la PR #12, puis decide du rebasage
   logique et du merge eventuel de cette PR dependante. Les favoris, donnees

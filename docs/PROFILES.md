@@ -29,7 +29,8 @@ injecte et le depart maison. L'interface ne l'affiche que pour une selection
 `Available` dont l'arret et la ligne correspondent au profil; elle ne fabrique
 aucune course pour `Empty`, `Stale` ou `Error`, et rejette un depart dont la
 marche et la marge du profil placeraient deja le depart maison dans le passe.
-La direction est un identifiant stable et doit elle aussi correspondre au depart.
+La direction est un identifiant stable, obligatoire et doit elle aussi
+correspondre au depart.
 
 ## Persistance et confidentialite
 
@@ -47,3 +48,6 @@ malforme, y compris un identifiant selectionne stocke avec un type invalide ou
 un profil JSON syntaxiquement valide mais hors contraintes du domaine. Un test sur
 emulateur ne remplace pas une observation apres arret force ou redemarrage d'un
 OPPO reel.
+
+Les identifiants de profils persistes doivent etre uniques; un doublon est une
+erreur de stockage et le contenu d'origine est conserve.
