@@ -144,14 +144,15 @@ class SharedPreferencesProfileRepositoryTest {
 
     @Test
     fun trailingJsonContentIsRejectedAndPreserved() {
-        val invalid = "[]garbage"
         val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
-        assertTrue(preferences.edit().putString("profiles", invalid).commit())
-        val repository = SharedPreferencesProfileRepository(context)
+        listOf("[]garbage", "[]/*garbage*/", "[]//garbage").forEach { invalid ->
+            assertTrue(preferences.edit().putString("profiles", invalid).commit())
+            val repository = SharedPreferencesProfileRepository(context)
 
-        assertEquals(ProfileSnapshot.StorageError, repository.snapshot())
-        assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
-        assertEquals(invalid, preferences.getString("profiles", null))
+            assertEquals(ProfileSnapshot.StorageError, repository.snapshot())
+            assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
+            assertEquals(invalid, preferences.getString("profiles", null))
+        }
     }
 
     private fun draft(line: String) = ProfileDraft(

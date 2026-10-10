@@ -74,9 +74,11 @@ class SharedPreferencesProfileRepository(
     }
 
     private fun readData(): ProfileSnapshot.Data? = runCatching {
-        val tokener = JSONTokener(preferences.getString(KEY_PROFILES, "[]"))
+        val raw = preferences.getString(KEY_PROFILES, "[]")
+        require(raw != null && hasOnlyWhitespaceAfterArray(raw))
+        val tokener = JSONTokener(raw)
         val array = tokener.nextValue()
-        require(array is JSONArray && tokener.nextClean().code == 0)
+        require(array is JSONArray)
         val profiles = buildList {
             repeat(array.length()) { index ->
                 val item = array.getJSONObject(index)
@@ -96,6 +98,35 @@ class SharedPreferencesProfileRepository(
         require(profiles.map { it.id }.distinct().size == profiles.size)
         ProfileSnapshot.Data(profiles, selected)
     }.getOrNull()
+
+    private fun hasOnlyWhitespaceAfterArray(raw: String): Boolean {
+        val start = raw.indexOfFirst { !it.isWhitespace() }
+        if (start < 0 || raw[start] != '[') return false
+        var depth = 0
+        var inString = false
+        var escaped = false
+        for (index in start until raw.length) {
+            val character = raw[index]
+            if (inString) {
+                when {
+                    escaped -> escaped = false
+                    character == '\\' -> escaped = true
+                    character == '"' -> inString = false
+                }
+                continue
+            }
+            when (character) {
+                '"' -> inString = true
+                '[' -> depth += 1
+                ']' -> {
+                    depth -= 1
+                    if (depth == 0) return raw.substring(index + 1).all { it.isWhitespace() }
+                    if (depth < 0) return false
+                }
+            }
+        }
+        return false
+    }
 
     private fun JSONObject.exactInt(key: String): Int {
         val value = get(key)
