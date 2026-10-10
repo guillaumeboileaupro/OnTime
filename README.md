@@ -5,18 +5,18 @@ avec widget, rappels de depart et identite visuelle e-paper.
 
 ![Logo OnTime](assets/branding/ontime-logo.png)
 
-## Code source et nettoyage
+## Cible et code source
 
-Le code GadgetTech importe est restaure : ProchainMetro, Simulateur,
-EcranVirtuel, Outils, HelloWorld et tests. Il constitue la base a analyser et
-refactoriser, pas la cible produit finale. Ne plus le supprimer en bloc.
-L'application Android reste a implementer.
+Cible : Android, developpe et teste sous Linux. Aucun ESP32, Arduino, firmware
+ni ecran physique dans le build, la CI ou l'architecture active.
 
-Premiere passe : separer la logique transport/calcul des dependances Arduino,
-conserver le comportement utile et les tests, puis porter vers Kotlin.
+- `core-domain/` : domaine Kotlin pur (departs, dates, profils) et ses tests.
+- `app/` : application Android Compose.
+- `archive/gadgettech/` : sources GadgetTech conservees comme reference
+  historique, ni compilees ni testees ([detail](archive/gadgettech/README.md)).
+
 Voir [plan](docs/ANALYSE_ET_PLAN.md) et [audit amont](docs/AUDIT_AMONT.md).
-L'[audit cible de l'issue #1](docs/AUDIT_ISSUE_1.md) cartographie les frontieres
-actuelles et le plan des extractions progressives.
+Cles d'API et fournisseurs : [API_KEYS.md](docs/API_KEYS.md).
 
 ## Application Android de demonstration
 

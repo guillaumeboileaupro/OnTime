@@ -15,14 +15,18 @@
   cache, doublons et TLS.
 - [x] Issue #3 : initialiser Android Kotlin/Compose et construire un APK debug
   sur fixtures, avec domaine Kotlin pur et quatre etats visibles.
-- [ ] Integrer PRIM et une gare SNCF avec couverture et quotas verifies.
+- [ ] Integrer l'API SNCF et Lignes d'Azur (GTFS-RT ou SIRI) avec couverture et
+  quotas verifies (`docs/API_KEYS.md`).
 - [x] Issue #5 : profils locaux persistants avec CRUD, selection, validation et
   calcul du depart de chez soi sur fixtures.
 - [ ] Issue #5 : favoris fournisseurs, revue accessibilite sur appareil et mode
   hors ligne avec donnees transport reelles.
 - [ ] Widget Glance, instances independantes et fraicheur visible.
 - [ ] Rappels, permissions, annulation/dedup et observation sur OPPO reel.
-- [x] Issue #8 : premiere CI C++ portable sur PR et push vers `main`.
+- [x] Issue #8 : premiere CI C++ portable sur PR et push vers `main`
+  (archivee ensuite avec le code GadgetTech).
+- [ ] Archiver le materiel GadgetTech hors build/CI et documenter les cles
+  d'API (`docs/API_KEYS.md`).
 - [x] Issue #8 : tests Android, build APK debug et artefact CI sans signature de
   production.
 - [x] Issues #3/#8 : lancement instrumente sur emulateur Android 15 en CI,

@@ -18,9 +18,12 @@ Inspecter Git, branche, HEAD, fichiers, PR et CI avant toute affirmation.
 
 ## Regles bloquantes
 
-- Conserver le code GadgetTech; nettoyer progressivement, sans suppression globale.
-- Cible finale Android avec widget et rappels; ne pas imposer Rust/Tauri de Control-TV.
-- Domaine transport independant des APIs Android/Arduino et des vues.
+- Cible : Android, developpe et teste sous Linux. Aucun ESP32, Arduino,
+  firmware, ecran physique ni materiel dans le build, la CI ou l'architecture.
+- `archive/gadgettech/` est une reference historique : ne pas la compiler,
+  la tester ni la reactiver.
+- Android avec widget et rappels; ne pas imposer Rust/Tauri de Control-TV.
+- Domaine transport independant des APIs Android et des vues.
 - Application, widget et rappels utilisent les memes contrats et le meme repository.
 - Ne jamais inventer passages, voies, retards, suppressions ou preuves de validation.
 - Conserver source, qualite, identites et horodatage; distinguer erreur/vide/perime.
