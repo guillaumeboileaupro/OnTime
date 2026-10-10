@@ -2,7 +2,7 @@ package fr.ontime.domain
 
 import java.time.Instant
 
-enum class Mode { Train, Rer, Metro, Tram }
+enum class Mode { Train, Rer, Metro, Tram, Bus }
 enum class Quality { Realtime, Scheduled, Estimated }
 enum class Status { Available, Empty, Stale, Error }
 

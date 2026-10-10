@@ -27,6 +27,12 @@ class NearestStationFinder(
     private val clock: Clock,
     private val searchRadiusMeters: Int = 3_000,
 ) {
+    internal fun walking(from: String, to: String): Pair<Int, Int>? {
+        if (!budget.tryAcquire(clock.instant())) return null
+        val walk = api.get("/journeys?from=$from&to=$to&direct_path=only&direct_path_mode%5B%5D=walking&disable_geojson=true")
+        return (walk as? SncfResponse.Body)?.let { parseWalking(it.json) }
+    }
+
     fun find(latitude: Double, longitude: Double): NearestStationResult {
         if (latitude !in -90.0..90.0 || longitude !in -180.0..180.0) return NearestStationResult.Error
         if (!budget.tryAcquire(clock.instant(), requests = 2)) return NearestStationResult.Busy
@@ -49,6 +55,13 @@ class NearestStationFinder(
         return NearestStationResult.Found(found, minutes, meters)
     }
 }
+
+/**
+ * Street walking time between two points (one request), or null when the
+ * budget refuses the call or the API cannot answer.
+ */
+fun NearestStationFinder.walkingBetween(fromLat: Double, fromLon: Double, toLat: Double, toLon: Double): Pair<Int, Int>? =
+    walking(String.format(Locale.ROOT, "%.5f;%.5f", fromLon, fromLat), String.format(Locale.ROOT, "%.5f;%.5f", toLon, toLat))
 
 /** Stop areas listed under [arrayKey], in API order; null if the body is malformed. */
 internal fun parseStopAreas(body: String, arrayKey: String): List<NearbyStation>? = runCatching {

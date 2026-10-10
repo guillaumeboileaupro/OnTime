@@ -28,9 +28,11 @@ Lignes d'Azur des Alpes-Maritimes.
 - [x] Trains directs depart -> destination avec arrivee, toutes les directions
   d'une gare, recherche par nom, gare la plus proche + marche (#16, #18).
 - [x] Appels reels verifies (curl) et parcours observe sur OPPO.
-- [ ] Lignes d'Azur : demande d'acces SIRI ou adaptateur GTFS-RT.
+- [x] Lignes d'Azur (bus et tram) sans cle : arrets du GTFS, departs du
+  GTFS-RT, verifie sur donnees reelles (Massena -> Gare Thiers, tram L1).
 - [ ] Trains supprimes et code 429 observes sur donnees reelles.
-- [ ] Issue #2 : cache hors ligne, doublons multi-fournisseurs, revue TLS.
+- [x] Issue #2 : doublons, TLS, fraicheur et limites documentes
+  (`docs/DATA_RELIABILITY.md`).
 
 ## Trajets (issue #5)
 
@@ -43,8 +45,8 @@ Lignes d'Azur des Alpes-Maritimes.
 ## Widget (issue #6)
 
 - [x] Premier widget Glance par trajet, configuration a l'ajout (#19).
-- [ ] Refaire le widget : lecture d'un coup d'oeil (compte a rebours), maquette
-  a valider par Guillaume.
+- [x] Widget refait : compte a rebours natif, tailles 2x2 et 4x2.
+- [ ] Nouveau widget valide par Guillaume.
 - [ ] Ajout, redimensionnement, deux instances et ecran eteint observes sur OPPO.
 
 ## Rappels (issue #7)
@@ -58,8 +60,11 @@ Lignes d'Azur des Alpes-Maritimes.
 - [x] CI Android verte sur chaque PR : tests, APK nomme par SHA, tests
   instrumentes sur emulateur.
 - [x] Installations et mises a jour observees sur OPPO.
-- [ ] Procedure de release, attribution des donnees SNCF et accord de Guillaume.
-- [ ] Revue independante des PRs empilees puis merge par Guillaume.
+- [x] Procedure de release et attribution documentees (`docs/ANDROID_BUILD.md`);
+  construction verifiee depuis un clone neuf sans `local.properties`.
+- [ ] Premiere release, avec accord de Guillaume.
+- [x] PRs #12 a #20 mergees par Guillaume (dans leurs branches empilees).
+- [ ] PR #22 : amener l'ensemble dans `main`.
 
 Ne cocher qu'avec preuve et reference de commit/PR. Revue/CI/appareil sont des
 criteres distincts. Aucun merge ou publication automatique.

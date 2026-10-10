@@ -125,7 +125,10 @@ private fun DepartureCard(departure: Departure, trip: TravelProfile, clock: Cloc
         style = MaterialTheme.typography.bodyLarge,
     )
     Text("Direction ${shortName(departure.destination)}", style = MaterialTheme.typography.bodyMedium)
-    Text("${qualityLabel(departure.quality)} · ${walkAndMargin(trip)}", style = MaterialTheme.typography.bodyMedium)
+    Text(
+        "${sourceLabel(departure.provider)} · ${qualityLabel(departure.quality)} · ${walkAndMargin(trip)}",
+        style = MaterialTheme.typography.bodyMedium,
+    )
 }
 
 @Composable
@@ -145,7 +148,10 @@ internal fun modeLabel(mode: Mode) = when (mode) {
     Mode.Rer -> "RER"
     Mode.Metro -> "Métro"
     Mode.Tram -> "Tram"
+    Mode.Bus -> "Bus"
 }
+
+private fun sourceLabel(provider: String) = if (provider == "lignes-azur") "Lignes d'Azur" else "SNCF"
 
 private fun qualityLabel(quality: Quality) = when (quality) {
     Quality.Realtime -> "Horaire en temps réel"

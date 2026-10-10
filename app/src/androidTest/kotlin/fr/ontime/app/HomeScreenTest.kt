@@ -66,6 +66,7 @@ class HomeScreenTest {
         composeRule.onNodeWithText("Quittez la maison à 08:33").assertIsDisplayed()
         composeRule.onNodeWithText("Train de 08:42, arrivée 09:09").assertIsDisplayed()
         composeRule.onNodeWithText("Direction Ville d'essai").assertIsDisplayed()
+        composeRule.onNodeWithText("SNCF", substring = true).assertIsDisplayed()
     }
 
     @Test
