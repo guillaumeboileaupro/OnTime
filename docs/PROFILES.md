@@ -52,10 +52,10 @@ JSON; les nombres et autres types ne sont jamais convertis. Un test sur
 emulateur ne remplace pas une observation apres arret force ou redemarrage d'un
 OPPO reel.
 
-Le document JSON doit etre entierement consomme; tout suffixe autre que des
-espaces est une erreur de stockage et reste preserve. Cette verification porte
-sur le texte brut afin que les commentaires toleres par `JSONTokener` ne soient
-pas confondus avec des espaces.
+Seul le repository ecrit ce stockage : le texte brut doit etre identique au
+re-encodage des profils decodes. Toute autre forme (suffixe, espaces, commentaires
+ou cles non quotees toleres par `JSONTokener`, apostrophes, cles en trop ou
+dupliquees) est une erreur de stockage et reste preservee.
 
 Les identifiants de profils persistes doivent etre uniques; un doublon est une
 erreur de stockage et le contenu d'origine est conserve. Une collision de l'ID
