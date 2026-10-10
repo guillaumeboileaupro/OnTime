@@ -63,7 +63,6 @@ import fr.ontime.app.reminders.ReminderStore
 import fr.ontime.domain.Departure
 import fr.ontime.domain.cancelledBefore
 import fr.ontime.domain.reminderAt
-import androidx.glance.appwidget.updateAll
 import fr.ontime.app.data.LegacyTripMigration
 import fr.ontime.app.data.SharedPreferencesLegacyTripStore
 import fr.ontime.domain.ProfileSnapshot
@@ -143,7 +142,7 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
 
     LaunchedEffect(revision) {
         // Trips may have been edited or deleted: widgets show them by id.
-        if (revision > 0) TripWidget().updateAll(applicationContext)
+        if (revision > 0) TripWidget.refreshAll(applicationContext)
     }
 
     LaunchedEffect(trip, screen, refresh) {

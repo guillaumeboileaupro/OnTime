@@ -8,7 +8,15 @@ import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.appwidget.AndroidRemoteViews
 import androidx.glance.appwidget.SizeMode
-import androidx.glance.appwidget.updateAll
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.currentState
 import fr.ontime.app.R
 import fr.ontime.domain.leaveAt
 import androidx.compose.runtime.Composable
@@ -81,7 +89,29 @@ class TripWidget : GlanceAppWidget() {
     override val stateDefinition = PreferencesGlanceStateDefinition
     override val sizeMode = SizeMode.Responsive(setOf(Small, Wide, Large))
 
+    /**
+     * The session stays alive between updates, so the content is reloaded when
+     * the shared [VERSION_KEY] changes (refresh, settings, trip edits) and the
+     * display settings are read again at every recomposition.
+     */
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val initial = load(context, id)
+        var loadedVersion = getAppWidgetState(context, PreferencesGlanceStateDefinition, id)[VERSION_KEY] ?: 0L
+        provideContent {
+            val version = currentState(VERSION_KEY) ?: 0L
+            var content by remember { mutableStateOf(initial) }
+            LaunchedEffect(version) {
+                if (version != loadedVersion) {
+                    content = load(context, id)
+                    loadedVersion = version
+                }
+            }
+            val options = DisplaySettings(context).read()
+            WidgetBody((content as? WidgetContent.Ready)?.copy(options = options) ?: content)
+        }
+    }
+
+    private suspend fun load(context: Context, id: GlanceId): WidgetContent {
         val tripId = getAppWidgetState(context, PreferencesGlanceStateDefinition, id)[TRIP_KEY]
         // No trip chosen for this widget: follow the trip shown on the home screen.
         val trip = (SharedPreferencesProfileRepository(context).snapshot() as? ProfileSnapshot.Data)
@@ -103,11 +133,24 @@ class TripWidget : GlanceAppWidget() {
                 WidgetRefreshAlarm.schedule(context, ready.trip.leaveAt(next).plusSeconds(60))
             }
         }
-        provideContent { WidgetBody(content) }
+        return content
     }
 
     companion object {
         val TRIP_KEY = stringPreferencesKey("trip_id")
+        private val VERSION_KEY = longPreferencesKey("version")
+
+        /** Reloads [ids] (every OnTime widget by default) even while their session is alive. */
+        suspend fun refreshAll(context: Context, ids: List<GlanceId>? = null) {
+            val targets = ids ?: GlanceAppWidgetManager(context).getGlanceIds(TripWidget::class.java)
+            val version = System.currentTimeMillis()
+            targets.forEach { id ->
+                updateAppWidgetState(context, PreferencesGlanceStateDefinition, id) { preferences ->
+                    preferences.toMutablePreferences().apply { this[VERSION_KEY] = version }
+                }
+                TripWidget().update(context, id)
+            }
+        }
     }
 }
 
@@ -132,13 +175,23 @@ class ToggleCountdown : ActionCallback {
         val settings = DisplaySettings(context)
         val options = settings.read()
         settings.write(options.copy(countdown = !options.countdown))
-        TripWidget().updateAll(context)
+        TripWidget.refreshAll(context)
+    }
+}
+
+/** Widget shortcut for the shared "leave-home time" display setting. */
+class ToggleLeaveTime : ActionCallback {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        val settings = DisplaySettings(context)
+        val options = settings.read()
+        settings.write(options.copy(leaveTime = !options.leaveTime))
+        TripWidget.refreshAll(context)
     }
 }
 
 class RefreshTripWidget : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        TripWidget().update(context, glanceId)
+        TripWidget.refreshAll(context, listOf(glanceId))
     }
 }
 
@@ -172,6 +225,11 @@ private fun WidgetBody(content: WidgetContent) {
                     text = "⏱",
                     style = style(18, bold = !content.options.countdown),
                     modifier = GlanceModifier.padding(start = 8.dp).clickable(actionRunCallback<ToggleCountdown>()),
+                )
+                Text(
+                    text = "⌂",
+                    style = style(20, bold = !content.options.leaveTime),
+                    modifier = GlanceModifier.padding(start = 8.dp).clickable(actionRunCallback<ToggleLeaveTime>()),
                 )
                 Text(
                     text = "↻",

@@ -22,7 +22,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.glance.appwidget.updateAll
 import fr.ontime.app.widget.TripWidget
 import kotlinx.coroutines.launch
 
@@ -36,7 +35,7 @@ fun SettingsScreen() {
     fun change(updated: DisplayOptions) {
         options = updated
         settings.write(updated)
-        scope.launch { TripWidget().updateAll(context) }
+        scope.launch { TripWidget.refreshAll(context) }
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -46,7 +45,7 @@ fun SettingsScreen() {
         Text("Widget", style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
         SettingSwitch("Afficher les trains supprimés", options.cancelled) { change(options.copy(cancelled = it)) }
         Text(
-            "Le compte à rebours peut aussi être activé ou masqué en touchant ⏱ sur le widget. " +
+            "Sur le widget, ⏱ active ou masque le compte à rebours et ⌂ l'heure de départ de chez soi. " +
                 "Sans compte à rebours ni heure de départ, l'heure du prochain départ est affichée. " +
                 "L'accueil signale toujours les suppressions.",
             style = MaterialTheme.typography.bodyMedium,
