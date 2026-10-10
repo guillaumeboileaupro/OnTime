@@ -41,6 +41,21 @@ fun selectNextDeparture(
     }
 }
 
+/**
+ * The next [limit] departures still reachable on foot, earliest first, under the
+ * same rules as [selectNextDeparture]. Call it only for an `Available` selection.
+ */
+fun reachableDepartures(
+    departures: List<Departure>,
+    now: Instant,
+    walking: Duration,
+    margin: Duration,
+    limit: Int,
+): List<Departure> = departures
+    .filter { it.isValid() && it.isRecommendable(now, walking, margin) }
+    .sortedBy { it.departureAt }
+    .take(limit)
+
 private fun Departure.isValid(): Boolean =
     provider.isNotBlank() && journeyId.isNotBlank() && stopId.isNotBlank() &&
         lineId.isNotBlank() && directionId.isNotBlank() && destination.isNotBlank() &&
