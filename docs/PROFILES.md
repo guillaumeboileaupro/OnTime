@@ -52,6 +52,9 @@ JSON; les nombres et autres types ne sont jamais convertis. Un test sur
 emulateur ne remplace pas une observation apres arret force ou redemarrage d'un
 OPPO reel.
 
+Le document JSON doit etre entierement consomme; tout suffixe autre que des
+espaces est une erreur de stockage et reste preserve.
+
 Les identifiants de profils persistes doivent etre uniques; un doublon est une
 erreur de stockage et le contenu d'origine est conserve. Une collision de l'ID
 genere a la creation est refusee avant ecriture. Un identifiant selectionne doit
