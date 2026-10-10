@@ -68,6 +68,22 @@ lus par le parseur presents, 4 departs `realtime` dont deux retards (+20 et
 observes : 429 (quota) et la representation d'un train supprime
 (`NO_SERVICE`) dans `/departures`.
 
+### Gare la plus proche et marche
+
+Bouton « Gare la plus proche et marche » de l'ecran des profils, a la demande :
+position unique au premier plan (`LocationManager`, sans Play Services, 30 s
+max), puis deux requetes reservees ensemble sur le budget de 20 s :
+
+1. `GET /coord/<lon>;<lat>/places_nearby?type[]=stop_area&count=1&distance=3000`
+2. `GET /journeys?from=<lon>;<lat>&to=<stop_area>&direct_path=only&direct_path_mode[]=walking`
+
+La duree du trajet pieton est arrondie a la minute superieure (0 a 180 min),
+puis preremplit l'arret et la marche du profil, modifiables avant
+enregistrement. La position n'est ni stockee ni journalisee.
+
+Verifie le 2026-10-10 depuis un point public du centre-ville : gare la plus
+proche a 1093 m a vol d'oiseau, trajet pieton SNCF de 1224 s pour 1307 m.
+
 Choix recommande :
 - par gare, leger : API SNCF (cle) `.../stop_areas/<id>/departures`;
 - sans cle : GTFS-RT trip updates + GTFS statique, rafraichi au plus toutes

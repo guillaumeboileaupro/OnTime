@@ -17,7 +17,10 @@
   sur fixtures, avec domaine Kotlin pur et quatre etats visibles.
 - [x] Issue #4 : client API SNCF, parseur `/departures` et quota de 20 s
   testes sur fixture (`feat/issue-4-sncf-departures`).
-- [ ] Issue #4 : appel reel avec cle, ecran et gestion des trains supprimes.
+- [x] Issue #4 : gare la plus proche et temps de marche SNCF depuis la position,
+  a la demande, testes sur fixtures (`feat/issue-4-sncf-departures`).
+- [ ] Issue #4 : bouton de localisation observe sur OPPO reel.
+- [ ] Issue #4 : departs reels a l'ecran et gestion des trains supprimes.
 - [ ] Integrer l'API SNCF et Lignes d'Azur (GTFS-RT ou SIRI) avec couverture et
   quotas verifies (`docs/API_KEYS.md`).
 - [x] Issue #5 : profils locaux persistants avec CRUD, selection, validation et

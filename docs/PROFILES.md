@@ -64,3 +64,12 @@ referencer un profil existant, sinon le stockage est signale invalide sans mutat
 L'interface recharge toujours le snapshot apres une mutation persistante, meme
 si la selection qui suit echoue; elle evite cette seconde ecriture si le profil
 est deja selectionne.
+
+## Gare la plus proche
+
+Avec une cle SNCF dans le build, le bouton « Gare la plus proche et marche »
+demande la permission de localisation au moment du clic, lit une seule position
+au premier plan et preremplit l'arret et la marche par l'itineraire pieton SNCF.
+Les valeurs restent modifiables et validees comme une saisie manuelle. La
+position n'est envoyee qu'a l'API SNCF, jamais stockee ni journalisee. Sans cle,
+le bouton est remplace par un message explicite.
