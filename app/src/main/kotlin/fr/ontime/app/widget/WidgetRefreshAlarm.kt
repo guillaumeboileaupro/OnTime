@@ -22,7 +22,7 @@ object WidgetRefreshAlarm {
         if (pendingAt > now && pendingAt <= at.toEpochMilli()) return
         preferences.edit().putLong("at", at.toEpochMilli()).apply()
         val manager = AppWidgetManager.getInstance(context)
-        listOf(TripWidgetReceiver::class.java, TripWidgetWideReceiver::class.java).forEachIndexed { index, receiver ->
+        listOf(TripWidgetReceiver::class.java, TripWidgetWideReceiver::class.java, TripWidgetBoardReceiver::class.java).forEachIndexed { index, receiver ->
             val ids = manager.getAppWidgetIds(ComponentName(context, receiver))
             if (ids.isEmpty()) return@forEachIndexed
             val intent = Intent(context, receiver)

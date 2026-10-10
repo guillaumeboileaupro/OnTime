@@ -43,6 +43,8 @@ import fr.ontime.app.Ink
 import fr.ontime.app.MainActivity
 import fr.ontime.app.Paper
 import fr.ontime.app.TimeFormat
+import fr.ontime.app.modeLabel
+import fr.ontime.domain.Departure
 import fr.ontime.app.data.SharedPreferencesProfileRepository
 import fr.ontime.app.data.TripLabels
 import fr.ontime.app.data.Transport
@@ -67,14 +69,14 @@ private sealed interface WidgetContent {
  */
 class TripWidget : GlanceAppWidget() {
     override val stateDefinition = PreferencesGlanceStateDefinition
-    override val sizeMode = SizeMode.Responsive(setOf(Small, Wide))
+    override val sizeMode = SizeMode.Responsive(setOf(Small, Wide, Large))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val tripId = getAppWidgetState(context, PreferencesGlanceStateDefinition, id)[TRIP_KEY]
         // No trip chosen for this widget: follow the trip shown on the home screen.
         val trip = (SharedPreferencesProfileRepository(context).snapshot() as? ProfileSnapshot.Data)
             ?.let { data -> data.profiles.firstOrNull { it.id == (tripId ?: data.selectedProfileId) } }
-        val update = trip?.let { withContext(Dispatchers.IO) { Transport.tripUpdate(context, it) } }
+        val update = trip?.let { withContext(Dispatchers.IO) { Transport.tripUpdate(context, it, limit = 4) } }
         val content = when {
             trip == null -> WidgetContent.NoTrip
             update == null -> WidgetContent.NoKey
@@ -108,6 +110,11 @@ class TripWidgetWideReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = TripWidget()
 }
 
+/** 4x3 departures board: countdown plus the next departures with their transport mode. */
+class TripWidgetBoardReceiver : GlanceAppWidgetReceiver() {
+    override val glanceAppWidget: GlanceAppWidget = TripWidget()
+}
+
 class RefreshTripWidget : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         TripWidget().update(context, glanceId)
@@ -117,6 +124,7 @@ class RefreshTripWidget : ActionCallback {
 private val InkText = ColorProvider(Ink)
 private val Small = DpSize(110.dp, 110.dp)
 private val Wide = DpSize(250.dp, 110.dp)
+private val Large = DpSize(250.dp, 200.dp)
 
 private fun style(size: Int, bold: Boolean = false) =
     TextStyle(color = InkText, fontSize = size.sp, fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal)
@@ -128,7 +136,7 @@ private fun WidgetBody(content: WidgetContent) {
         modifier = GlanceModifier
             .fillMaxSize()
             .background(Paper)
-            .padding(12.dp)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
             .clickable(actionStartActivity<MainActivity>()),
     ) {
         Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -163,14 +171,42 @@ private fun ReadyBody(content: WidgetContent.Ready, wide: Boolean) {
             when (update.selection.status) {
                 Status.Stale -> "Horaires pas à jour : touchez ↻."
                 Status.Error -> "Horaires indisponibles : touchez ↻."
-                else -> "Aucun train direct à prendre."
+                else -> "Aucun départ direct à prendre."
             },
         )
         return
     }
     val leave = content.trip.leaveAt(next)
+    val large = LocalSize.current.height >= Large.height
+    if (large) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Partir dans ", style = style(14))
+            Countdown(leave)
+            Text("  à ${TimeFormat.format(leave)}", style = style(16, bold = true))
+        }
+        Spacer(GlanceModifier.height(6.dp))
+        update.upcoming.forEach { departure -> DepartureRow(departure, content.trip) }
+        Spacer(GlanceModifier.height(4.dp))
+        Text("Vérifié à ${TimeFormat.format(update.checkedAt)}", style = style(14))
+        return
+    }
+    if (wide) {
+        // Launcher 4x2 cells can be barely 100 dp high: keep it to three short lines.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Partir dans ", style = style(14))
+            Countdown(leave)
+            Text("  à ${TimeFormat.format(leave)}", style = style(16, bold = true))
+        }
+        DepartureRow(next, content.trip)
+    } else {
+        Countdown(leave)
+        Text("partir à ${TimeFormat.format(leave)}", style = style(14, bold = true))
+    }
+}
+
+@Composable
+private fun Countdown(leave: java.time.Instant) {
     val context = LocalContext.current
-    Text("Partir dans", style = style(14))
     AndroidRemoteViews(
         RemoteViews(context.packageName, R.layout.widget_countdown).apply {
             val untilLeave = leave.toEpochMilli() - System.currentTimeMillis()
@@ -178,14 +214,37 @@ private fun ReadyBody(content: WidgetContent.Ready, wide: Boolean) {
             setChronometerCountDown(R.id.countdown, true)
         },
     )
-    Text("à ${TimeFormat.format(leave)}", style = style(16, bold = true))
-    if (wide) {
-        val arrival = next.arrivalAt?.let { " → ${TimeFormat.format(it)}" } ?: ""
-        Text("Train ${TimeFormat.format(next.departureAt)}$arrival", style = style(14))
-        update.upcoming.getOrNull(1)?.let { following ->
-            Text("Puis partir à ${TimeFormat.format(content.trip.leaveAt(following))}", style = style(14))
-        }
+}
+
+/** One board line: transport badge, departure -> arrival, and when to leave home. */
+@Composable
+private fun DepartureRow(departure: Departure, trip: TravelProfile) {
+    Row(
+        modifier = GlanceModifier.fillMaxWidth().padding(vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = modeBadge(departure),
+            style = TextStyle(color = ColorProvider(Paper), fontSize = 13.sp, fontWeight = FontWeight.Bold),
+            maxLines = 1,
+            modifier = GlanceModifier.background(Ink).padding(horizontal = 6.dp, vertical = 2.dp),
+        )
+        val arrival = departure.arrivalAt?.let { " → ${TimeFormat.format(it)}" } ?: ""
+        Text(
+            text = "  ${TimeFormat.format(departure.departureAt)}$arrival",
+            style = style(16, bold = true),
+            maxLines = 1,
+            modifier = GlanceModifier.defaultWeight(),
+        )
+        Text("partir ${TimeFormat.format(trip.leaveAt(departure))}", style = style(14), maxLines = 1)
     }
+}
+
+/** "TRAIN", "TRAM L1", "BUS 12": the network line number is shown when it is a short public code. */
+internal fun modeBadge(departure: Departure): String {
+    val mode = modeLabel(departure.mode).uppercase()
+    val line = departure.lineId.takeIf { it.length <= 4 }
+    return if (line != null) "$mode $line" else mode
 }
 
 @Composable
