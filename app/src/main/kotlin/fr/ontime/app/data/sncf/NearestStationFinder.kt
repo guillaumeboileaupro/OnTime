@@ -35,7 +35,7 @@ class NearestStationFinder(
         val nearby = api.get(
             "/coord/$coord/places_nearby?type%5B%5D=stop_area&count=1&distance=$searchRadiusMeters&disable_geojson=true",
         )
-        val stations = (nearby as? SncfResponse.Body)?.let { parseNearbyStations(it.json) }
+        val stations = (nearby as? SncfResponse.Body)?.let { parseStopAreas(it.json, "places_nearby") }
             ?: return NearestStationResult.Error
         val found = stations.firstOrNull() ?: return NearestStationResult.NoStation
 
@@ -50,14 +50,12 @@ class NearestStationFinder(
     }
 }
 
-/** Stop areas sorted by distance; null if the body is malformed. */
-internal fun parseNearbyStations(body: String): List<NearbyStation>? = runCatching {
-    val places = JSONObject(body).optJSONArray("places_nearby") ?: return@runCatching emptyList()
-    (0 until places.length()).map { index ->
-        val place = places.getJSONObject(index)
-        require(place.getString("embedded_type") == "stop_area")
-        NearbyStation(place.getString("id"), place.getString("name"))
-    }
+/** Stop areas listed under [arrayKey], in API order; null if the body is malformed. */
+internal fun parseStopAreas(body: String, arrayKey: String): List<NearbyStation>? = runCatching {
+    val places = JSONObject(body).optJSONArray(arrayKey) ?: return@runCatching emptyList()
+    (0 until places.length()).map { places.getJSONObject(it) }
+        .filter { it.optString("embedded_type") == "stop_area" }
+        .map { NearbyStation(it.getString("id"), it.getString("name")) }
 }.getOrNull()
 
 /** Walking duration (s) and distance (m) of the direct walking journey, null if absent or malformed. */
