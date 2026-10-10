@@ -91,6 +91,32 @@ class SharedPreferencesProfileRepositoryTest {
         assertEquals(duplicate, preferences.getString("profiles", null))
     }
 
+    @Test
+    fun generatedIdCollisionIsRejectedWithoutCorruptingStorage() {
+        val repository = SharedPreferencesProfileRepository(context) { "same" }
+        assertTrue(repository.create(draft("A")) is ProfileChange.Success)
+
+        assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
+        val snapshot = repository.snapshot() as ProfileSnapshot.Data
+        assertEquals(listOf("A"), snapshot.profiles.map { it.lineId })
+    }
+
+    @Test
+    fun danglingSelectedIdIsReportedAndPreserved() {
+        val repository = SharedPreferencesProfileRepository(context) { "profile-1" }
+        assertTrue(repository.create(draft("A")) is ProfileChange.Success)
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        assertTrue(
+            preferences.edit()
+                .putString(SharedPreferencesProfileRepository.KEY_SELECTED, "missing")
+                .commit(),
+        )
+
+        assertEquals(ProfileSnapshot.StorageError, repository.snapshot())
+        assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
+        assertEquals("missing", preferences.getString(SharedPreferencesProfileRepository.KEY_SELECTED, null))
+    }
+
     private fun draft(line: String) = ProfileDraft(
         stopId = "demo:stop",
         lineId = line,

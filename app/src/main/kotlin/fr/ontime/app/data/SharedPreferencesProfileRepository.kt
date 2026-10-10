@@ -26,6 +26,7 @@ class SharedPreferencesProfileRepository(
         val result = draft.toProfile(idFactory())
         if (result !is ProfileChange.Success) return result
         val current = readData() ?: return ProfileChange.StorageError
+        if (current.profiles.any { it.id == result.profile.id }) return ProfileChange.StorageError
         val updated = current.profiles + result.profile
         return if (write(updated, current.selectedProfileId ?: result.profile.id)) {
             result
@@ -88,7 +89,7 @@ class SharedPreferencesProfileRepository(
             }
         }
         val selected = preferences.getString(KEY_SELECTED, null)
-            ?.takeIf { id -> profiles.any { it.id == id } }
+        require(selected == null || profiles.any { it.id == selected })
         require(profiles.map { it.id }.distinct().size == profiles.size)
         ProfileSnapshot.Data(profiles, selected)
     }.getOrNull()
