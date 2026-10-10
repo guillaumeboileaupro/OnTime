@@ -71,8 +71,9 @@ class TripWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val tripId = getAppWidgetState(context, PreferencesGlanceStateDefinition, id)[TRIP_KEY]
+        // No trip chosen for this widget: follow the trip shown on the home screen.
         val trip = (SharedPreferencesProfileRepository(context).snapshot() as? ProfileSnapshot.Data)
-            ?.profiles?.firstOrNull { it.id == tripId }
+            ?.let { data -> data.profiles.firstOrNull { it.id == (tripId ?: data.selectedProfileId) } }
         val update = trip?.let { withContext(Dispatchers.IO) { Transport.tripUpdate(context, it) } }
         val content = when {
             trip == null -> WidgetContent.NoTrip
@@ -97,7 +98,13 @@ class TripWidget : GlanceAppWidget() {
     }
 }
 
+/** 2x2 widget (resizable). */
 class TripWidgetReceiver : GlanceAppWidgetReceiver() {
+    override val glanceAppWidget: GlanceAppWidget = TripWidget()
+}
+
+/** 4x2 widget: same content, wide layout with the train, arrival and next option. */
+class TripWidgetWideReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = TripWidget()
 }
 
@@ -140,7 +147,7 @@ private fun WidgetBody(content: WidgetContent) {
             }
         }
         when (content) {
-            WidgetContent.NoTrip -> Message("Touchez longuement pour choisir un trajet.")
+            WidgetContent.NoTrip -> Message("Créez un trajet dans OnTime.")
             WidgetContent.NoKey -> Message("Horaires indisponibles.")
             is WidgetContent.Ready -> ReadyBody(content, wide)
         }

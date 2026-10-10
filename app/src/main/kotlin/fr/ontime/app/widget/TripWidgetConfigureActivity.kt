@@ -44,7 +44,8 @@ class TripWidgetConfigureActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val appWidgetId = intent?.extras?.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
             ?: AppWidgetManager.INVALID_APPWIDGET_ID
-        setResult(RESULT_CANCELED, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId))
+        // Leaving this optional screen keeps the widget: it then follows the home trip.
+        setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId))
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
             finish()
             return
@@ -69,6 +70,13 @@ class TripWidgetConfigureActivity : ComponentActivity() {
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.semantics { heading() },
                     )
+                    Button(
+                        onClick = { finish() },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                    ) { Text("Suivre le trajet de l'accueil", style = MaterialTheme.typography.labelLarge) }
+                    if (trips.isNotEmpty()) {
+                        Text("Ou choisir un trajet fixe :", style = MaterialTheme.typography.bodyLarge)
+                    }
                     if (trips.isEmpty()) {
                         Text("Créez d'abord un trajet dans OnTime.", style = MaterialTheme.typography.bodyLarge)
                         Button(

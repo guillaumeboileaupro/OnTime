@@ -22,13 +22,15 @@ object WidgetRefreshAlarm {
         if (pendingAt > now && pendingAt <= at.toEpochMilli()) return
         preferences.edit().putLong("at", at.toEpochMilli()).apply()
         val manager = AppWidgetManager.getInstance(context)
-        val ids = manager.getAppWidgetIds(ComponentName(context, TripWidgetReceiver::class.java))
-        if (ids.isEmpty()) return
-        val intent = Intent(context, TripWidgetReceiver::class.java)
-            .setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
-            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
-        val pending = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        context.getSystemService(AlarmManager::class.java)
-            .setAndAllowWhileIdle(AlarmManager.RTC, maxOf(at.toEpochMilli(), now), pending)
+        listOf(TripWidgetReceiver::class.java, TripWidgetWideReceiver::class.java).forEachIndexed { index, receiver ->
+            val ids = manager.getAppWidgetIds(ComponentName(context, receiver))
+            if (ids.isEmpty()) return@forEachIndexed
+            val intent = Intent(context, receiver)
+                .setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
+                .putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+            val pending = PendingIntent.getBroadcast(context, index, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            context.getSystemService(AlarmManager::class.java)
+                .setAndAllowWhileIdle(AlarmManager.RTC, maxOf(at.toEpochMilli(), now), pending)
+        }
     }
 }
