@@ -36,7 +36,7 @@ Licence Ouverte 2.0.
 
 | Source | Usage | Acces |
 |---|---|---|
-| API SNCF (Navitia) `https://api.sncf.com/v1/coverage/sncf/stop_areas/<id>/departures` | Prochains departs d'une gare, recherche de gares, perturbations | Cle gratuite : inscription sur https://numerique.sncf.com/startup/api/, recue par e-mail; authentification HTTP basic avec la cle comme utilisateur. Verifier le quota a l'inscription |
+| API SNCF (Navitia) `https://api.sncf.com/v1/coverage/sncf/stop_areas/<id>/departures` | Prochains departs d'une gare, recherche de gares, perturbations | Cle gratuite : inscription sur https://numerique.sncf.com/startup/api/, recue par e-mail; authentification HTTP basic avec la cle comme utilisateur. Quota : 5000 requetes par jour |
 | GTFS-RT trip updates `https://proxy.transport.data.gouv.fr/resource/sncf-gtfs-rt-trip-updates` | Retards (protobuf, ~750 Ko), trains des 60 prochaines minutes, toutes les 2 min | Libre, sans cle; rapprocher `trip_id` du GTFS statique |
 | SIRI ET Lite (beta) `https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-estimated-timetable` | Meme perimetre en XML autonome : ligne, destination, horaire prevu et estime par gare (~13 Mo national) | Libre, sans cle |
 | GTFS-RT service alerts / SIRI SX Lite (`sncf-gtfs-rt-service-alerts`, `sncf-siri-lite-situation-exchange`) | Messages d'incident; identifiant commun = numero commercial du train | Libre, sans cle |
@@ -52,6 +52,14 @@ Les Arcs - Cannes - Nice - Menton et Nice - Tende, avec des retards estimes
 (+10, +20 min). Le GTFS-RT trip updates citait aussi cette gare. Le perimetre
 reste garanti seulement pour TGV et Intercites : conserver l'etiquette
 theorique quand aucune estimation n'est publiee.
+
+Etat du code (issue #4) : `app/.../data/sncf/` contient le client API SNCF,
+le parseur `/departures` et une source avec cache. Le domaine `RequestBudget`
+impose une requete toutes les 20 s au plus, partagee par l'appli : au maximum
+4320 appels par 24 h, sous les 5000 autorises. Une reponse refusee par le budget
+reutilise le dernier resultat, qui devient perime selon sa `fetchedAt`.
+Pas encore branche a l'ecran. A verifier avec une vraie cle : codes d'erreur
+(401/403/429 supposes) et presence des trains supprimes dans `/departures`.
 
 Choix recommande :
 - par gare, leger : API SNCF (cle) `.../stop_areas/<id>/departures`;
