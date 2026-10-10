@@ -53,6 +53,9 @@ import fr.ontime.domain.Departure
 import fr.ontime.domain.DepartureRepository
 import fr.ontime.domain.Selection
 import fr.ontime.domain.Status
+import fr.ontime.app.data.sncf.NearestStationFinder
+import fr.ontime.app.data.sncf.SncfClient
+import fr.ontime.domain.RequestBudget
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -60,6 +63,9 @@ import java.time.format.DateTimeFormatter
 
 private val Paper = Color(0xFFDFDCD3)
 private val Ink = Color(0xFF2A2926)
+/** One budget for every SNCF call made by this process. */
+private val SncfQuota = RequestBudget()
+
 private val DemoClock: Clock = Clock.fixed(
     Instant.parse("2026-10-09T06:30:00Z"),
     ZoneId.of("Europe/Paris"),
@@ -160,7 +166,12 @@ private fun DemoDeparturesScreen(profileRepository: fr.ontime.domain.ProfileRepo
             }
         }
         SelectionPanel(selection)
-        ProfileSection(profileRepository, DemoClock, selection)
+        val nearestStation = remember {
+            BuildConfig.SNCF_API_KEY.takeIf { it.isNotBlank() }?.let { key ->
+                NearestStationFinder(SncfClient(key), SncfQuota, Clock.systemUTC())
+            }
+        }
+        ProfileSection(profileRepository, DemoClock, selection, nearestStation)
         Text(
             text = "Source : fixtures locales • aucune API ni donnée temps réel",
             color = Ink,

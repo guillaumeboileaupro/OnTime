@@ -13,9 +13,12 @@ sealed interface SncfResponse {
     data object Failed : SncfResponse
 }
 
+/** Authenticated GET on the SNCF coverage; [pathAndQuery] starts with `/`. */
 fun interface SncfApi {
-    fun departures(stopAreaId: String): SncfResponse
+    fun get(pathAndQuery: String): SncfResponse
 }
+
+internal fun encodeSegment(value: String): String = URLEncoder.encode(value, Charsets.UTF_8.name())
 
 /** Blocking client for the SNCF (Navitia) API; call it off the main thread. */
 class SncfClient(
@@ -26,10 +29,8 @@ class SncfClient(
         require(apiKey.isNotBlank())
     }
 
-    override fun departures(stopAreaId: String): SncfResponse {
-        val stop = URLEncoder.encode(stopAreaId, Charsets.UTF_8.name())
-        val url = URL("$baseUrl/stop_areas/$stop/departures?count=10&data_freshness=realtime&disable_geojson=true")
-        val connection = url.openConnection() as HttpURLConnection
+    override fun get(pathAndQuery: String): SncfResponse {
+        val connection = URL(baseUrl + pathAndQuery).openConnection() as HttpURLConnection
         return try {
             connection.connectTimeout = TIMEOUT_MS
             connection.readTimeout = TIMEOUT_MS

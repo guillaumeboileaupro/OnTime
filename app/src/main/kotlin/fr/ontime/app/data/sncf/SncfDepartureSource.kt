@@ -24,7 +24,9 @@ class SncfDepartureSource(
         if (!budget.tryAcquire(clock.instant())) {
             return cache[stopAreaId]?.let(::available) ?: SncfSnapshot(Status.Stale)
         }
-        val response = api.departures(stopAreaId)
+        val response = api.get(
+            "/stop_areas/${encodeSegment(stopAreaId)}/departures?count=10&data_freshness=realtime&disable_geojson=true",
+        )
         if (response !is SncfResponse.Body) return SncfSnapshot(Status.Error)
         val departures = parseSncfDepartures(response.json, clock.instant())
             ?: return SncfSnapshot(Status.Error)

@@ -49,7 +49,7 @@ fun ProfileDraft.validationErrors(): Set<ProfileError> = buildSet {
     if (stopId.isBlank()) add(ProfileError.EmptyStop)
     if (lineId.isBlank()) add(ProfileError.EmptyLine)
     if (direction.isBlank()) add(ProfileError.EmptyDirection)
-    if (walkingMinutes !in 0..180) add(ProfileError.InvalidWalking)
+    if (walkingMinutes !in 0..MAX_WALKING_MINUTES) add(ProfileError.InvalidWalking)
     if (marginMinutes !in 0..60) add(ProfileError.InvalidMargin)
 }
 

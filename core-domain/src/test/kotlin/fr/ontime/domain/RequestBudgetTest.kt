@@ -48,6 +48,16 @@ class RequestBudgetTest {
     }
 
     @Test
+    fun `a multi request reservation waits for each reserved interval`() {
+        val budget = RequestBudget()
+        assertTrue(budget.tryAcquire(start, requests = 2))
+        assertFalse(budget.tryAcquire(start.plusSeconds(5)))
+        assertFalse(budget.tryAcquire(start.plusSeconds(39)))
+        assertTrue(budget.tryAcquire(start.plusSeconds(40)))
+        assertFailsWith<IllegalArgumentException> { budget.tryAcquire(start.plusSeconds(90), requests = 0) }
+    }
+
+    @Test
     fun `rejects a non positive interval`() {
         assertFailsWith<IllegalArgumentException> { RequestBudget(Duration.ZERO) }
     }

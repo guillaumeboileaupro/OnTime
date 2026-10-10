@@ -1,0 +1,4 @@
+{"places_nearby": [
+  {"id": "stop_area:DEMO:SA:1", "name": "Gare fictive", "embedded_type": "stop_area", "distance": "1093", "quality": 0, "stop_area": {"id": "stop_area:DEMO:SA:1"}},
+  {"id": "stop_area:DEMO:SA:2", "name": "Gare fictive 2", "embedded_type": "stop_area", "distance": "1839", "quality": 0, "stop_area": {"id": "stop_area:DEMO:SA:2"}}
+]}
