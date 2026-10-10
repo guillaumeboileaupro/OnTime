@@ -27,14 +27,37 @@ class SncfDepartureSource(
         (response as? SncfResponse.Body)?.let { parseSncfDepartures(it.json, now) }
     }
 
-    /** Next direct trains from [originId] to [destinationId], with arrival times. */
+    /**
+     * Next direct trains from [originId] to [destinationId], with arrival times,
+     * delays and cancellations. The timetable used to spot removed trains is
+     * reused for [TIMETABLE_REUSE] to spare the daily quota.
+     */
     fun fetchTrip(originId: String, destinationId: String): SncfSnapshot = load("$originId>$destinationId") { api, now ->
-        val response = api.get(
-            "/journeys?from=${encodeSegment(originId)}&to=${encodeSegment(destinationId)}" +
-                "&max_nb_transfers=0&count=5&data_freshness=realtime&disable_geojson=true",
-        )
-        (response as? SncfResponse.Body)?.let { parseSncfJourneys(it.json, originId, now) }
+        val realtime = journeys(api, originId, destinationId, "realtime", REALTIME_COUNT)
+            ?.let { parseSncfTrains(it, originId, now) } ?: return@load null
+        val timetable = timetable(api, originId, destinationId, now)
+        if (timetable == null) realtime.map { it.departure } else mergeCancellations(realtime, timetable)
     }
+
+    private val timetables = mutableMapOf<String, Pair<java.time.Instant, List<SncfTrain>>>()
+
+    private fun timetable(api: SncfApi, originId: String, destinationId: String, now: java.time.Instant): List<SncfTrain>? {
+        val key = "$originId>$destinationId"
+        timetables[key]?.takeIf { java.time.Duration.between(it.first, now) < TIMETABLE_REUSE }?.let { return it.second }
+        if (!budget.tryAcquire(now)) return timetables[key]?.second
+        val trains = journeys(api, originId, destinationId, "base_schedule", TIMETABLE_COUNT)
+            ?.let { parseSncfTrains(it, originId, now) } ?: return null
+        timetables[key] = now to trains
+        return trains
+    }
+
+    private fun journeys(api: SncfApi, originId: String, destinationId: String, freshness: String, count: Int): String? =
+        (
+            api.get(
+                "/journeys?from=${encodeSegment(originId)}&to=${encodeSegment(destinationId)}" +
+                    "&max_nb_transfers=0&count=$count&data_freshness=$freshness&disable_geojson=true",
+            ) as? SncfResponse.Body
+            )?.json
 
     @Synchronized
     private fun load(key: String, request: (SncfApi, java.time.Instant) -> List<Departure>?): SncfSnapshot {
@@ -44,6 +67,12 @@ class SncfDepartureSource(
         val departures = request(api, clock.instant()) ?: return SncfSnapshot(Status.Error)
         cache[key] = departures
         return available(departures)
+    }
+
+    private companion object {
+        const val REALTIME_COUNT = 6
+        const val TIMETABLE_COUNT = 10
+        val TIMETABLE_REUSE: java.time.Duration = java.time.Duration.ofMinutes(10)
     }
 
     private fun available(departures: List<Departure>) =

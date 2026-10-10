@@ -158,4 +158,17 @@ class DepartureSelectorTest {
         )
         assertEquals(listOf("first", "second"), result.map { it.journeyId })
     }
+
+    @Test
+    fun `reports delays and the cancellations before the recommended train`() {
+        val late = departure("late", 600).copy(scheduledAt = now.plusSeconds(0))
+        assertEquals(10L, late.delayMinutes)
+        assertNull(departure("on-time", 600).copy(scheduledAt = now.plusSeconds(600)).delayMinutes)
+        assertNull(departure("unknown", 600).delayMinutes)
+
+        val cancelled = departure("cancelled", 300, cancelled = true)
+        val laterCancelled = departure("later-cancelled", 900, cancelled = true)
+        val next = departure("next", 600)
+        assertEquals(listOf(cancelled), cancelledBefore(listOf(laterCancelled, next, cancelled), next, now))
+    }
 }

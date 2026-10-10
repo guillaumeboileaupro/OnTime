@@ -12,4 +12,11 @@ class NamesTest {
         assertEquals("(Commune)", shortName("(Commune)"))
         assertEquals("Gare A → Ville B", shortLabel("Gare A (Commune) → Ville B (Commune B)"))
     }
+
+    @Test
+    fun `formats delays for people`() {
+        assertEquals("10 min", formatDelay(10))
+        assertEquals("1 h 00", formatDelay(60))
+        assertEquals("3 h 40", formatDelay(220))
+    }
 }
