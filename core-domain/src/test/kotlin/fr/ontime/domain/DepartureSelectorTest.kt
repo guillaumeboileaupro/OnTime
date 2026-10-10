@@ -128,6 +128,7 @@ class DepartureSelectorTest {
         journeyId = id,
         stopId = "demo:stop",
         lineId = "demo:line",
+        directionId = "demo:direction:outbound",
         destination = "Destination fictive",
         mode = Mode.Rer,
         departureAt = now.plusSeconds(secondsFromNow),

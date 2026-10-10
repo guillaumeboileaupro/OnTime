@@ -45,7 +45,7 @@ fun ProfileSection(repository: ProfileRepository, clock: Clock, selection: Selec
     var editingId by remember { mutableStateOf<String?>(null) }
     var stop by remember { mutableStateOf("demo:stop:central") }
     var line by remember { mutableStateOf("demo:line:a") }
-    var direction by remember { mutableStateOf("Direction de démonstration") }
+    var direction by remember { mutableStateOf("demo:direction:outbound") }
     var walking by remember { mutableStateOf("7") }
     var margin by remember { mutableStateOf("2") }
     var message by remember { mutableStateOf<String?>(null) }
@@ -106,7 +106,8 @@ fun ProfileSection(repository: ProfileRepository, clock: Clock, selection: Selec
             profiles.firstOrNull { it.id == id }?.let { profile ->
                 val departure = selection.departure?.takeIf {
                     selection.status == Status.Available &&
-                        it.stopId == profile.stopId && it.lineId == profile.lineId
+                        it.stopId == profile.stopId && it.lineId == profile.lineId &&
+                        it.directionId == profile.direction
                 }
                 if (departure == null) {
                     Text("Aucun départ fixture compatible à calculer.", color = ProfileInk)

@@ -67,6 +67,18 @@ class SharedPreferencesProfileRepositoryTest {
         assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
     }
 
+    @Test
+    fun validJsonWithInvalidDomainValuesIsReportedAndPreserved() {
+        val invalid = """[{"id":"bad","stopId":"demo:stop","lineId":"A","direction":"out","walkingMinutes":-20,"marginMinutes":2}]"""
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        assertTrue(preferences.edit().putString("profiles", invalid).commit())
+        val repository = SharedPreferencesProfileRepository(context) { "profile-1" }
+
+        assertEquals(ProfileSnapshot.StorageError, repository.snapshot())
+        assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
+        assertEquals(invalid, preferences.getString("profiles", null))
+    }
+
     private fun draft(line: String) = ProfileDraft(
         stopId = "demo:stop",
         lineId = line,

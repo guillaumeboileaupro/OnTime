@@ -43,7 +43,7 @@ class MainActivityTest {
     fun onlyCalculatesHomeDepartureForMatchingAvailableSelection() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         SharedPreferencesProfileRepository(context) { "profile-ui" }.create(
-            ProfileDraft("demo:stop:central", "demo:line:a", "Direction fictive", 7, 2),
+            ProfileDraft("demo:stop:central", "demo:line:a", "demo:direction:outbound", 7, 2),
         )
         composeRule.activityRule.scenario.recreate()
 
@@ -58,7 +58,19 @@ class MainActivityTest {
     fun rejectsFixtureDepartureAlreadyMissedWithProfileDurations() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         SharedPreferencesProfileRepository(context) { "profile-missed" }.create(
-            ProfileDraft("demo:stop:central", "demo:line:a", "Direction fictive", 20, 2),
+            ProfileDraft("demo:stop:central", "demo:line:a", "demo:direction:outbound", 20, 2),
+        )
+        composeRule.activityRule.scenario.recreate()
+
+        composeRule.onNodeWithText("Aucun départ fixture compatible à calculer.")
+            .performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun rejectsFixtureDepartureForAnotherDirection() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        SharedPreferencesProfileRepository(context) { "profile-other-direction" }.create(
+            ProfileDraft("demo:stop:central", "demo:line:a", "demo:direction:inbound", 7, 2),
         )
         composeRule.activityRule.scenario.recreate()
 

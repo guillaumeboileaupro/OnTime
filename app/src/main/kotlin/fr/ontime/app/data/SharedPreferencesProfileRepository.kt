@@ -76,16 +76,15 @@ class SharedPreferencesProfileRepository(
         val profiles = buildList {
             repeat(array.length()) { index ->
                 val item = array.getJSONObject(index)
-                add(
-                    TravelProfile(
-                        id = item.getString("id"),
+                val result = ProfileDraft(
                         stopId = item.getString("stopId"),
                         lineId = item.getString("lineId"),
                         direction = item.getString("direction"),
                         walkingMinutes = item.getInt("walkingMinutes"),
                         marginMinutes = item.getInt("marginMinutes"),
-                    ),
-                )
+                    ).toProfile(item.getString("id"))
+                require(result is ProfileChange.Success)
+                add(result.profile)
             }
         }
         val selected = preferences.getString(KEY_SELECTED, null)
