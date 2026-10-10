@@ -29,6 +29,7 @@ injecte et le depart maison. L'interface ne l'affiche que pour une selection
 `Available` dont l'arret et la ligne correspondent au profil; elle ne fabrique
 aucune course pour `Empty`, `Stale` ou `Error`, et rejette un depart dont la
 marche et la marge du profil placeraient deja le depart maison dans le passe.
+La direction est un identifiant stable et doit elle aussi correspondre au depart.
 
 ## Persistance et confidentialite
 
@@ -42,6 +43,7 @@ saisir de secret, d'adresse personnelle ou de trajet reel sensible.
 
 Le test instrumente recree le repository sur le meme stockage pour verifier la
 conservation, puis couvre modification, selection, suppression et stockage
-malforme, y compris un identifiant selectionne stocke avec un type invalide. Un test sur
+malforme, y compris un identifiant selectionne stocke avec un type invalide ou
+un profil JSON syntaxiquement valide mais hors contraintes du domaine. Un test sur
 emulateur ne remplace pas une observation apres arret force ou redemarrage d'un
 OPPO reel.
