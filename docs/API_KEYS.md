@@ -84,6 +84,21 @@ enregistrement. La position n'est ni stockee ni journalisee.
 Verifie le 2026-10-10 depuis un point public du centre-ville : gare la plus
 proche a 1093 m a vol d'oiseau, trajet pieton SNCF de 1224 s pour 1307 m.
 
+### Appels utilises par l'appli
+
+| Usage | Requete | Cout |
+|---|---|---|
+| Accueil, toutes les 60 s | `/journeys?from=<depart>&to=<arrivee>&max_nb_transfers=0&count=5&data_freshness=realtime` | 1 |
+| Toutes les directions d'une gare | `/stop_areas/<id>/routes?count=200` | 1 |
+| Recherche de gare par nom | `/places?q=<nom>&type[]=stop_area&count=8` | 1 |
+| Gare la plus proche + marche | `places_nearby` puis `journeys` pieton | 2 |
+
+Budget partage : seau de 4 jetons, un jeton gagne toutes les 20 s (au plus
+4324 appels par 24 h). Verifie le 2026-10-10 entre deux gares publiques : les
+sections `public_transport` de `/journeys` portent `vehicle_journey`, `line`,
+`route`, `physical_mode`, `data_freshness`, depart et arrivee; 15 routes listees
+pour une grande gare.
+
 Choix recommande :
 - par gare, leger : API SNCF (cle) `.../stop_areas/<id>/departures`;
 - sans cle : GTFS-RT trip updates + GTFS statique, rafraichi au plus toutes
