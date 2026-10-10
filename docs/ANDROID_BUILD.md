@@ -1,16 +1,14 @@
-# Application Android sur fixtures
+# Construire, installer et publier OnTime
 
 ## Portee
 
-Cette premiere application est une demonstration hors ligne. Elle affiche des
-fixtures locales et permet d'observer `Available`, `Empty`, `Stale` et `Error`.
-Elle ne contient aucune API reelle, persistance, recherche, widget ou
-notification. Le bandeau et chaque depart indiquent explicitement leur nature
-fictive.
+Application Android qui interroge l'API SNCF (cle personnelle dans
+`local.properties`, voir `docs/API_KEYS.md`). Sans cle, l'appli et le widget
+affichent « Horaires indisponibles » : c'est le cas de l'APK construit par la CI.
 
-Le module `core-domain` est Kotlin/JVM pur : aucune dependance Android. Il porte
-les contrats de depart, selection, repository et parsing des dates avec
-`java.time`. Le module `app` contient Compose et les fixtures de presentation.
+Le module `core-domain` est Kotlin/JVM pur (departs, trajets, quota, rappels),
+sans dependance Android. Le module `app` contient Compose, le widget Glance,
+les rappels et les adaptateurs SNCF.
 
 ## Versions et prerequis
 
@@ -22,7 +20,9 @@ les contrats de depart, selection, repository et parsing des dates avec
 - Compose BOM 2025.05.01.
 
 Le SDK Android doit etre disponible via `ANDROID_HOME` ou `ANDROID_SDK_ROOT`.
-Aucun secret, compte fournisseur ou cle de signature de production n'est requis.
+Aucun compte ni cle de signature de production n'est requis pour construire.
+Pour des horaires reels, ajouter `ontime.sncfApiKey` dans `local.properties`
+(ignore par Git) : l'APK local contient alors la cle et ne doit pas etre partage.
 
 ## Construire et tester
 
@@ -76,3 +76,29 @@ agrandissement de police, orientation, contraste et navigation tactile.
 - lancement et quatre etats verifies sur emulateur CI, mais pas encore sur OPPO ;
 - aucune persistance Room/DataStore introduite sans besoin verifie ;
 - widget, rappels et permissions volontairement hors tranche.
+
+
+## Reglages OPPO (ColorOS)
+
+ColorOS gele l'application des que l'ecran s'eteint (`OplusHansManager ...
+freeze ... LcdOff`, observe le 2026-10-10) et libere ses verrous de reveil.
+Pour que le widget et les rappels fonctionnent ecran eteint : Parametres >
+Batterie > OnTime > autoriser l'activite en arriere-plan (ou « Ne pas
+optimiser »), et autoriser les notifications et les alarmes exactes.
+
+## Procedure de release
+
+Aucune release, tag ou publication sans accord explicite de Guillaume.
+
+1. Toutes les PRs de la tranche revues independamment (Codex ou humain) et
+   mergees par Guillaume dans `main`; CI verte sur `main`.
+2. Checkout propre de `main`, `./gradlew :core-domain:test :app:testDebugUnitTest
+   :app:assembleRelease` avec une cle de signature hors depot (jamais commitee,
+   jamais en clair dans un workflow).
+3. Validation sur OPPO reel : installation par-dessus la version precedente,
+   trajets conserves, accueil, widget (ajout, 2 instances, redimensionnement),
+   rappel recu ecran eteint. Consigner les resultats dans une passation.
+4. Attribution : citer la SNCF comme source des horaires dans « A propos » si
+   l'application est diffusee au-dela d'un usage personnel; verifier les
+   conditions d'utilisation de l'API SNCF et la licence ODbL des donnees.
+5. Guillaume cree le tag `vX.Y.Z` et la release; `versionCode` incremente.
