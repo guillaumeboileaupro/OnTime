@@ -1,5 +1,8 @@
 package fr.ontime.app
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,10 +19,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import fr.ontime.app.data.DeviceLocator
+import fr.ontime.app.data.sncf.NearestStationFinder
+import fr.ontime.app.data.sncf.NearestStationResult
 import fr.ontime.domain.HomeDepartureCalculator
 import fr.ontime.domain.ProfileChange
 import fr.ontime.domain.ProfileCommandResult
@@ -32,12 +40,20 @@ import fr.ontime.domain.TravelProfile
 import java.time.Clock
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private val ProfilePaper = Color(0xFFDFDCD3)
 private val ProfileInk = Color(0xFF2A2926)
 
 @Composable
-fun ProfileSection(repository: ProfileRepository, clock: Clock, selection: Selection) {
+fun ProfileSection(
+    repository: ProfileRepository,
+    clock: Clock,
+    selection: Selection,
+    nearestStation: NearestStationFinder? = null,
+) {
     var revision by remember { mutableIntStateOf(0) }
     val snapshot = remember(revision) { repository.snapshot() }
     val profiles = (snapshot as? ProfileSnapshot.Data)?.profiles.orEmpty()
@@ -49,6 +65,49 @@ fun ProfileSection(repository: ProfileRepository, clock: Clock, selection: Selec
     var walking by remember { mutableStateOf("7") }
     var margin by remember { mutableStateOf("2") }
     var message by remember { mutableStateOf<String?>(null) }
+    var locating by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val locator = remember { DeviceLocator(context.applicationContext) }
+    val scope = rememberCoroutineScope()
+
+    fun lookUpNearestStation(finder: NearestStationFinder) {
+        locating = true
+        message = "Localisation en cours…"
+        locator.locate { location ->
+            if (location == null) {
+                locating = false
+                message = "Position indisponible : activez la localisation."
+                return@locate
+            }
+            scope.launch {
+                val result = withContext(Dispatchers.IO) { finder.find(location.latitude, location.longitude) }
+                locating = false
+                message = when (result) {
+                    is NearestStationResult.Found -> {
+                        stop = result.station.stopAreaId
+                        walking = result.walkingMinutes.toString()
+                        "${result.station.name} : ${result.walkingMinutes} min à pied " +
+                            "(${result.walkingMeters} m, itinéraire SNCF). Vérifiez avant d'enregistrer."
+                    }
+                    NearestStationResult.NoStation -> "Aucune gare SNCF à moins de 3 km."
+                    NearestStationResult.TooFar -> "Gare trop éloignée à pied (plus de 3 h)."
+                    NearestStationResult.Busy -> "Quota SNCF : réessayez dans 40 secondes."
+                    NearestStationResult.Error -> "Recherche SNCF impossible pour le moment."
+                }
+            }
+        }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { grants ->
+        val finder = nearestStation
+        if (finder != null && grants.values.any { it }) {
+            lookUpNearestStation(finder)
+        } else {
+            message = "Localisation refusée : saisissez l'arrêt et la marche."
+        }
+    }
 
     fun load(profile: TravelProfile) {
         editingId = profile.id
@@ -76,7 +135,7 @@ fun ProfileSection(repository: ProfileRepository, clock: Clock, selection: Selec
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text("PROFILS — FIXTURES LOCALES", color = ProfileInk)
-        Text("Persistés sur cet appareil, sans API réelle.", color = ProfileInk)
+        Text("Persistés sur cet appareil. Départs : fixtures.", color = ProfileInk)
         if (snapshot == ProfileSnapshot.StorageError) {
             Text("Erreur de lecture du stockage des profils.", color = ProfileInk)
         }
@@ -123,6 +182,19 @@ fun ProfileSection(repository: ProfileRepository, clock: Clock, selection: Selec
                     }
                 }
             }
+        }
+        if (nearestStation == null) {
+            Text("Gare la plus proche : clé SNCF absente de ce build.", color = ProfileInk)
+        } else {
+            OutlinedButton(
+                enabled = !locating,
+                onClick = {
+                    permissionLauncher.launch(
+                        arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Gare la plus proche et marche", color = ProfileInk) }
         }
         ProfileField("Arrêt", stop) { stop = it }
         ProfileField("Ligne", line) { line = it }

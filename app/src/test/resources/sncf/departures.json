@@ -1,0 +1,40 @@
+{
+  "context": {"timezone": "Europe/Paris", "current_datetime": "20261010T115500"},
+  "departures": [
+    {
+      "display_informations": {"direction": "Destination fictive A", "physical_mode": "TER", "headsign": "800001"},
+      "stop_point": {"id": "stop_point:DEMO:SP:1", "stop_area": {"id": "stop_area:DEMO:SA:1"}},
+      "route": {"id": "route:DEMO:R1", "line": {"id": "line:DEMO:L1"}},
+      "stop_date_time": {
+        "departure_date_time": "20261010T122300",
+        "base_departure_date_time": "20261010T120300",
+        "data_freshness": "realtime"
+      },
+      "links": [
+        {"type": "line", "id": "line:DEMO:L1"},
+        {"type": "vehicle_journey", "id": "vehicle_journey:DEMO:800001"},
+        {"type": "physical_mode", "id": "physical_mode:LocalTrain"}
+      ]
+    },
+    {
+      "display_informations": {"direction": "Destination fictive B", "physical_mode": "Car", "headsign": "C1"},
+      "stop_point": {"id": "stop_point:DEMO:SP:2", "stop_area": {"id": "stop_area:DEMO:SA:1"}},
+      "route": {"id": "route:DEMO:R2", "line": {"id": "line:DEMO:C1"}},
+      "stop_date_time": {"departure_date_time": "20261010T121000", "data_freshness": "base_schedule"},
+      "links": [
+        {"type": "vehicle_journey", "id": "vehicle_journey:DEMO:C1"},
+        {"type": "physical_mode", "id": "physical_mode:Coach"}
+      ]
+    },
+    {
+      "display_informations": {"direction": "Destination fictive C", "physical_mode": "TGV", "headsign": "6001"},
+      "stop_point": {"id": "stop_point:DEMO:SP:3", "stop_area": {"id": "stop_area:DEMO:SA:1"}},
+      "route": {"id": "route:DEMO:R3", "line": {"id": "line:DEMO:L2"}},
+      "stop_date_time": {"departure_date_time": "20261010T124500", "data_freshness": "base_schedule"},
+      "links": [
+        {"type": "vehicle_journey", "id": "vehicle_journey:DEMO:6001"},
+        {"type": "physical_mode", "id": "physical_mode:LongDistanceTrain"}
+      ]
+    }
+  ]
+}

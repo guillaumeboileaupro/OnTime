@@ -1,8 +1,16 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.isFile }?.reader()?.use { load(it) }
+}
+val sncfApiKey = localProperties.getProperty("ontime.sncfApiKey").orEmpty()
+require(sncfApiKey.none { it == '"' || it == '\\' }) { "ontime.sncfApiKey contains invalid characters" }
 
 android {
     namespace = "fr.ontime.app"
@@ -15,6 +23,8 @@ android {
         versionCode = 1
         versionName = "0.1.0-demo"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Personal use only: a key embedded in an APK can be extracted.
+        buildConfigField("String", "SNCF_API_KEY", "\"$sncfApiKey\"")
     }
 
     buildTypes {
@@ -30,6 +40,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -49,6 +60,7 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+    testImplementation("org.json:json:20240303")
 
     androidTestImplementation(platform("androidx.compose:compose-bom:2025.05.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
