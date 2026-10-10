@@ -6,12 +6,12 @@ import java.time.Instant
 /**
  * Shared provider quota guard (token bucket). Up to [burst] requests may run
  * back to back, then one more is earned every [refillInterval]. Over any 24 h
- * the 20 s / 4 defaults allow at most 4320 + 4 calls, under the 5000 daily
- * requests granted by the SNCF API.
+ * the 18 s / 20 defaults allow at most 4800 + 20 calls, under the 5000 daily
+ * requests granted by the SNCF API, while a search flow is never throttled.
  */
 class RequestBudget(
-    private val refillInterval: Duration = Duration.ofSeconds(20),
-    private val burst: Int = 4,
+    private val refillInterval: Duration = Duration.ofSeconds(18),
+    private val burst: Int = 20,
 ) {
     private var tokens = burst.toDouble()
     private var updatedAt: Instant? = null

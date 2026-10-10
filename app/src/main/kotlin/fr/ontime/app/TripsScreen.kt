@@ -25,6 +25,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -48,7 +49,7 @@ import kotlinx.coroutines.withContext
 
 private val ButtonHeight = Modifier.heightIn(min = 48.dp)
 private const val LABEL_SEPARATOR = " → "
-private const val BUSY_MESSAGE = "Trop de recherches rapprochées : réessayez dans un instant."
+private const val BUSY_MESSAGE = "Limite de requêtes SNCF atteinte : réessayez dans une minute."
 private const val ERROR_MESSAGE = "Recherche impossible pour le moment."
 
 @Composable
@@ -80,11 +81,14 @@ fun TripsScreen(
     var margin by remember { mutableStateOf("2") }
     var message by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
+    var formOpen by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val locator = remember { DeviceLocator(context.applicationContext) }
     val scope = rememberCoroutineScope()
+    val focus = LocalFocusManager.current
 
     fun reset() {
+        formOpen = false
         editingId = null
         origin = null
         destination = null
@@ -100,6 +104,7 @@ fun TripsScreen(
     fun load(profile: TravelProfile) {
         val label = labels.get(profile.id).orEmpty()
         reset()
+        formOpen = true
         editingId = profile.id
         origin = NearbyStation(profile.stopId, label.substringBefore(LABEL_SEPARATOR).ifBlank { "Gare enregistrée" })
         destination = NearbyStation(profile.destinationId, label.substringAfter(LABEL_SEPARATOR, "Destination enregistrée"))
@@ -168,30 +173,64 @@ fun TripsScreen(
         if (snapshot == ProfileSnapshot.StorageError) {
             Text("Vos trajets n'ont pas pu être lus sur ce téléphone.", style = MaterialTheme.typography.bodyLarge)
         }
+        Text(
+            "Trajets enregistrés",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.semantics { heading() },
+        )
+        if (profiles.isEmpty()) {
+            Text("Aucun trajet enregistré pour le moment.", style = MaterialTheme.typography.bodyLarge)
+        }
         profiles.forEach { profile ->
-            val selected = profile.id == selectedId
-            OutlinedButton(
-                onClick = {
-                    message = when (repository.select(profile.id)) {
-                        ProfileCommandResult.Success -> {
-                            load(profile)
-                            onChanged()
-                            "Trajet affiché sur l'accueil."
-                        }
-                        ProfileCommandResult.NotFound -> "Trajet introuvable."
-                        ProfileCommandResult.StorageError -> "Erreur d'enregistrement."
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().then(ButtonHeight),
+            val shown = profile.id == selectedId
+            Column(
+                modifier = Modifier.fillMaxWidth().border(if (shown) 2.dp else 1.dp, Ink).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    "${if (selected) "● " else "○ "}${labels.get(profile.id)?.let(::shortLabel) ?: "Trajet sans nom"}",
-                    style = MaterialTheme.typography.labelLarge,
+                    labels.get(profile.id)?.let(::shortLabel) ?: "Trajet sans nom",
+                    style = MaterialTheme.typography.titleMedium,
                 )
+                Text(
+                    "${profile.walkingMinutes} min de marche + ${profile.marginMinutes} min de marge" +
+                        if (shown) " · affiché sur l'accueil" else "",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (!shown) {
+                        Button(
+                            onClick = {
+                                message = when (repository.select(profile.id)) {
+                                    ProfileCommandResult.Success -> {
+                                        onChanged()
+                                        "Trajet affiché sur l'accueil."
+                                    }
+                                    ProfileCommandResult.NotFound -> "Trajet introuvable."
+                                    ProfileCommandResult.StorageError -> "Erreur d'enregistrement."
+                                }
+                            },
+                            modifier = Modifier.weight(1f).then(ButtonHeight),
+                        ) { Text("Afficher", style = MaterialTheme.typography.labelLarge) }
+                    }
+                    OutlinedButton(
+                        onClick = { load(profile) },
+                        modifier = Modifier.weight(1f).then(ButtonHeight),
+                    ) { Text("Modifier", style = MaterialTheme.typography.labelLarge) }
+                }
             }
         }
+        if (!formOpen) {
+            Button(
+                onClick = {
+                    reset()
+                    formOpen = true
+                    message = null
+                },
+                modifier = Modifier.fillMaxWidth().then(ButtonHeight),
+            ) { Text("+ Nouveau trajet", style = MaterialTheme.typography.labelLarge) }
+        }
 
-        Column(
+        if (formOpen) Column(
             modifier = Modifier.fillMaxWidth().border(1.dp, Ink).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -206,6 +245,7 @@ fun TripsScreen(
             Button(
                 enabled = !busy,
                 onClick = {
+                    focus.clearFocus()
                     permissionLauncher.launch(
                         arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
                     )
@@ -256,6 +296,7 @@ fun TripsScreen(
             Button(
                 enabled = origin != null && destination != null && !busy,
                 onClick = {
+                    focus.clearFocus()
                     val from = requireNotNull(origin)
                     val to = requireNotNull(destination)
                     val draft = ProfileDraft(
@@ -284,15 +325,15 @@ fun TripsScreen(
                 },
                 modifier = Modifier.fillMaxWidth().then(ButtonHeight),
             ) { Text("Enregistrer le trajet", style = MaterialTheme.typography.labelLarge) }
-            editingId?.let { id ->
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(
-                        onClick = {
-                            reset()
-                            message = null
-                        },
-                        modifier = Modifier.weight(1f).then(ButtonHeight),
-                    ) { Text("Annuler", style = MaterialTheme.typography.labelLarge) }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(
+                    onClick = {
+                        reset()
+                        message = null
+                    },
+                    modifier = Modifier.weight(1f).then(ButtonHeight),
+                ) { Text("Annuler", style = MaterialTheme.typography.labelLarge) }
+                editingId?.let { id ->
                     OutlinedButton(
                         onClick = {
                             message = when (repository.delete(id)) {
@@ -322,7 +363,8 @@ private fun StepTitle(text: String) {
 
 @Composable
 private fun StationButton(text: String, onClick: () -> Unit) {
-    OutlinedButton(onClick = onClick, modifier = Modifier.fillMaxWidth().then(ButtonHeight)) {
+    val focus = LocalFocusManager.current
+    OutlinedButton(onClick = { focus.clearFocus(); onClick() }, modifier = Modifier.fillMaxWidth().then(ButtonHeight)) {
         Text(text, style = MaterialTheme.typography.labelLarge)
     }
 }
@@ -336,6 +378,11 @@ private fun StationSearchField(
     onSearch: () -> Unit,
 ) {
     val canSearch = !busy && query.trim().length >= 2
+    val focus = LocalFocusManager.current
+    val search = {
+        focus.clearFocus()
+        onSearch()
+    }
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
@@ -343,12 +390,12 @@ private fun StationSearchField(
         singleLine = true,
         textStyle = MaterialTheme.typography.bodyLarge,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { if (canSearch) onSearch() }),
+        keyboardActions = KeyboardActions(onSearch = { if (canSearch) search() }),
         modifier = Modifier.fillMaxWidth(),
     )
     OutlinedButton(
         enabled = canSearch,
-        onClick = onSearch,
+        onClick = search,
         modifier = Modifier.fillMaxWidth().then(ButtonHeight),
     ) { Text("Rechercher", style = MaterialTheme.typography.labelLarge) }
 }
@@ -368,6 +415,7 @@ private fun ProfileError.explanation() = when (this) {
 
 @Composable
 private fun NumberField(label: String, value: String, modifier: Modifier, onValueChange: (String) -> Unit) {
+    val focus = LocalFocusManager.current
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -375,6 +423,7 @@ private fun NumberField(label: String, value: String, modifier: Modifier, onValu
         modifier = modifier,
         singleLine = true,
         textStyle = MaterialTheme.typography.bodyLarge,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
     )
 }

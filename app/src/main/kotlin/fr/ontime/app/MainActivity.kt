@@ -49,7 +49,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import fr.ontime.app.data.SharedPreferencesProfileRepository
 import fr.ontime.app.data.TripLabels
+import fr.ontime.app.data.LegacyTripMigration
+import fr.ontime.app.data.SharedPreferencesLegacyTripStore
 import fr.ontime.app.data.sncf.NearestStationFinder
+import fr.ontime.app.data.sncf.SncfApi
 import fr.ontime.app.data.sncf.SncfClient
 import fr.ontime.app.data.sncf.SncfDepartureSource
 import fr.ontime.app.data.sncf.StationSearch
@@ -70,10 +73,10 @@ private val MaxDataAge: Duration = Duration.ofMinutes(3)
 
 /** SNCF use cases sharing one client, clock and quota budget. */
 class SncfServices(apiKey: String, clock: Clock) {
-    private val client = SncfClient(apiKey)
-    val departures = SncfDepartureSource(client, SncfQuota, clock)
-    val nearest = NearestStationFinder(client, SncfQuota, clock)
-    val search = StationSearch(client, SncfQuota, clock)
+    val api: SncfApi = SncfClient(apiKey)
+    val departures = SncfDepartureSource(api, SncfQuota, clock)
+    val nearest = NearestStationFinder(api, SncfQuota, clock)
+    val search = StationSearch(api, SncfQuota, clock)
 }
 
 private enum class Screen(val title: String) {
@@ -105,6 +108,20 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
     var homeState by remember { mutableStateOf<HomeState>(HomeState.Loading) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        if (sncf != null) {
+            withContext(Dispatchers.IO) {
+                LegacyTripMigration(
+                    SharedPreferencesLegacyTripStore(applicationContext),
+                    profileRepository,
+                    labels,
+                    sncf.api,
+                ).run()
+            }
+            revision += 1
+        }
+    }
 
     LaunchedEffect(trip, screen, refresh) {
         when {
