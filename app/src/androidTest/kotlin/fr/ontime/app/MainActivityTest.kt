@@ -1,6 +1,8 @@
 package fr.ontime.app
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -29,10 +31,10 @@ class MainActivityTest {
 
     @Test
     fun launchesOnHomeAndNavigatesWithTheMenu() {
-        composeRule.onNodeWithText("Prochain départ").assertIsDisplayed()
+        composeRule.onNode(hasText("Prochain départ") and isHeading()).assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Ouvrir le menu").performClick()
         composeRule.onNodeWithText("Mes trajets").performClick()
-        composeRule.onNodeWithText("Mes trajets").assertIsDisplayed()
+        composeRule.onNode(hasText("Mes trajets") and isHeading()).assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Ouvrir le menu").performClick()
         composeRule.onNodeWithText("À propos").performClick()
         composeRule.onNodeWithText("Votre position n'est jamais enregistrée.").assertIsDisplayed()
