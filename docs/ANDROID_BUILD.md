@@ -63,7 +63,7 @@ l'identifiant de l'appareil ni de logs personnels.
 
 ## Identite visuelle et accessibilite
 
-L'ecran utilise seulement `#dfdcd3` et `#2a2926`. Le PNG approuve est copie
+L'ecran utilise seulement `#ddd9d0` et `#282828`. Le PNG approuve est copie
 byte-for-byte dans les ressources Android, sans recadrage ni redessin. Les etats
 ne dependent pas d'une couleur et disposent de libelles explicites pour
 TalkBack. Les tests automatises ne remplacent pas une revue sur telephone pour

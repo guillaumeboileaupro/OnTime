@@ -4,7 +4,7 @@
 
 Application Android personnelle de prochains departs SNCF, RER, metro et tram,
 widget d'accueil et rappels pour partir de chez soi. Profils, marche et marge.
-Style e-paper, palette UI #dfdcd3/#2a2926, logo fourni preserve sans modification.
+Style e-paper, palette UI #ddd9d0/#282828, logo fourni preserve sans modification.
 La police exacte du logo n'est pas identifiee; ne pas affirmer une equivalence.
 Le SVG actuel integre le PNG original, sans courbes vectorielles.
 

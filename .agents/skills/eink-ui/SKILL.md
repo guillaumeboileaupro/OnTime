@@ -4,7 +4,7 @@ description: Conserver le style e-paper GadgetTech dans l'application Android et
 ---
 
 Lire docs/UI_EINK.md. Ne pas modifier le logo fourni ni substituer sa police. Conserver le style e-paper comme identite logicielle sans cible materielle.
-- Garder fond #dfdcd3 et encre #2a2926, pastille de ligne, grands chiffres contours et traits fins.
+- Garder fond #ddd9d0 et encre #282828, pastille de ligne, grands chiffres contours et traits fins.
 - Donner priorite a quand partir, mode/ligne, destination, heure du transport et fraicheur.
 - Afficher SNCF/RER/METRO/TRAM sans dependre de la couleur; garder les accents sur Android.
 - Adapter les petits widgets a une seule recommandation et les grands a quelques alternatives.
