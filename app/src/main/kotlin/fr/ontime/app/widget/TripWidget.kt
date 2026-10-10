@@ -1,6 +1,15 @@
 package fr.ontime.app.widget
 
 import android.content.Context
+import android.os.SystemClock
+import android.widget.RemoteViews
+import androidx.compose.ui.unit.DpSize
+import androidx.glance.LocalContext
+import androidx.glance.LocalSize
+import androidx.glance.appwidget.AndroidRemoteViews
+import androidx.glance.appwidget.SizeMode
+import fr.ontime.app.R
+import fr.ontime.domain.leaveAt
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,7 +51,6 @@ import fr.ontime.app.shortLabel
 import fr.ontime.domain.ProfileSnapshot
 import fr.ontime.domain.Status
 import fr.ontime.domain.TravelProfile
-import java.time.Duration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -53,12 +61,13 @@ private sealed interface WidgetContent {
 }
 
 /**
- * Home-screen widget showing one saved trip per instance. It shows absolute
- * times (leave home, train, arrival) because Android does not refresh widgets
- * every minute in the background; the check time is always visible.
+ * Home-screen widget showing one saved trip per instance, read at a glance: a
+ * native countdown to the time to leave home (it ticks without app updates),
+ * that time, and on wide sizes the train, arrival and next option.
  */
 class TripWidget : GlanceAppWidget() {
     override val stateDefinition = PreferencesGlanceStateDefinition
+    override val sizeMode = SizeMode.Responsive(setOf(Small, Wide))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val tripId = getAppWidgetState(context, PreferencesGlanceStateDefinition, id)[TRIP_KEY]
@@ -73,6 +82,12 @@ class TripWidget : GlanceAppWidget() {
                 trip = trip,
                 update = withContext(Dispatchers.IO) { sncf.tripUpdate(trip) },
             )
+        }
+        // Refresh just after the shown leave time so the widget moves to the next train.
+        (content as? WidgetContent.Ready)?.let { ready ->
+            ready.update.upcoming.firstOrNull()?.let { next ->
+                WidgetRefreshAlarm.schedule(context, ready.trip.leaveAt(next).plusSeconds(60))
+            }
         }
         provideContent { WidgetBody(content) }
     }
@@ -93,12 +108,15 @@ class RefreshTripWidget : ActionCallback {
 }
 
 private val InkText = ColorProvider(Ink)
+private val Small = DpSize(110.dp, 110.dp)
+private val Wide = DpSize(250.dp, 110.dp)
 
 private fun style(size: Int, bold: Boolean = false) =
     TextStyle(color = InkText, fontSize = size.sp, fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal)
 
 @Composable
 private fun WidgetBody(content: WidgetContent) {
+    val wide = LocalSize.current.width >= Wide.width
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -109,54 +127,62 @@ private fun WidgetBody(content: WidgetContent) {
         Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = (content as? WidgetContent.Ready)?.label ?: "OnTime",
-                style = style(16, bold = true),
+                style = style(14, bold = true),
                 maxLines = 1,
                 modifier = GlanceModifier.defaultWeight(),
             )
             if (content is WidgetContent.Ready) {
                 Text(
                     text = "↻",
-                    style = style(22, bold = true),
-                    modifier = GlanceModifier.padding(horizontal = 8.dp).clickable(actionRunCallback<RefreshTripWidget>()),
+                    style = style(20, bold = true),
+                    modifier = GlanceModifier.padding(start = 8.dp).clickable(actionRunCallback<RefreshTripWidget>()),
                 )
             }
         }
-        Spacer(GlanceModifier.height(6.dp))
         when (content) {
-            WidgetContent.NoTrip -> Message("Trajet introuvable : appuyez longuement pour choisir un trajet.")
-            WidgetContent.NoKey -> Message("Horaires indisponibles dans cette version.")
-            is WidgetContent.Ready -> ReadyBody(content)
+            WidgetContent.NoTrip -> Message("Touchez longuement pour choisir un trajet.")
+            WidgetContent.NoKey -> Message("Horaires indisponibles.")
+            is WidgetContent.Ready -> ReadyBody(content, wide)
         }
     }
 }
 
 @Composable
-private fun ReadyBody(content: WidgetContent.Ready) {
+private fun ReadyBody(content: WidgetContent.Ready, wide: Boolean) {
     val update = content.update
-    when (update.selection.status) {
-        Status.Available -> {
-            val pause = Duration.ofMinutes((content.trip.walkingMinutes + content.trip.marginMinutes).toLong())
-            update.upcoming.forEachIndexed { index, departure ->
-                val leave = TimeFormat.format(departure.departureAt.minus(pause))
-                val arrival = departure.arrivalAt?.let { ", arrivée ${TimeFormat.format(it)}" } ?: ""
-                if (index == 0) {
-                    Text("Quittez la maison à $leave", style = style(20, bold = true))
-                    Text("Train ${TimeFormat.format(departure.departureAt)}$arrival", style = style(15))
-                    Spacer(GlanceModifier.height(4.dp))
-                } else {
-                    Text("Puis $leave · train ${TimeFormat.format(departure.departureAt)}", style = style(14))
-                }
-            }
-        }
-        Status.Empty -> Message("Aucun train direct à prendre pour le moment.")
-        Status.Stale -> Message("Horaires pas à jour : touchez ↻.")
-        Status.Error -> Message("Horaires indisponibles : vérifiez la connexion puis touchez ↻.")
+    val next = update.upcoming.firstOrNull()
+    if (update.selection.status != Status.Available || next == null) {
+        Message(
+            when (update.selection.status) {
+                Status.Stale -> "Horaires pas à jour : touchez ↻."
+                Status.Error -> "Horaires indisponibles : touchez ↻."
+                else -> "Aucun train direct à prendre."
+            },
+        )
+        return
     }
-    Spacer(GlanceModifier.height(4.dp))
-    Text("Vérifié à ${TimeFormat.format(update.checkedAt)}", style = style(14))
+    val leave = content.trip.leaveAt(next)
+    val context = LocalContext.current
+    Text("Partir dans", style = style(14))
+    AndroidRemoteViews(
+        RemoteViews(context.packageName, R.layout.widget_countdown).apply {
+            val untilLeave = leave.toEpochMilli() - System.currentTimeMillis()
+            setChronometer(R.id.countdown, SystemClock.elapsedRealtime() + untilLeave, null, true)
+            setChronometerCountDown(R.id.countdown, true)
+        },
+    )
+    Text("à ${TimeFormat.format(leave)}", style = style(16, bold = true))
+    if (wide) {
+        val arrival = next.arrivalAt?.let { " → ${TimeFormat.format(it)}" } ?: ""
+        Text("Train ${TimeFormat.format(next.departureAt)}$arrival", style = style(14))
+        update.upcoming.getOrNull(1)?.let { following ->
+            Text("Puis partir à ${TimeFormat.format(content.trip.leaveAt(following))}", style = style(14))
+        }
+    }
 }
 
 @Composable
 private fun Message(text: String) {
+    Spacer(GlanceModifier.height(8.dp))
     Text(text, style = style(15))
 }
