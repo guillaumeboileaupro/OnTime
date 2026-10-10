@@ -1,8 +1,10 @@
 # OnTime - plan a cases
 
-Etat au 2026-10-10. PRs empilees non mergees : #12 -> #13 -> #15 -> #16 -> #17
--> #18 -> #19 -> #20. Cible : Android (dev/CI sous Linux), reseaux SNCF et
-Lignes d'Azur des Alpes-Maritimes.
+Etat au 2026-10-10. `main` contient tout jusqu'a Lignes d'Azur (#22, #24);
+PR #25 (widgets, retards, suppressions, parametres) a merger. Toutes les issues
+fonctionnelles sont fermees; les verifications sur appareil encore non
+observees restent listees ci-dessous. Cible : Android (dev/CI sous Linux),
+reseaux SNCF et Lignes d'Azur des Alpes-Maritimes.
 
 ## Socle
 
@@ -30,7 +32,9 @@ Lignes d'Azur des Alpes-Maritimes.
 - [x] Appels reels verifies (curl) et parcours observe sur OPPO.
 - [x] Lignes d'Azur (bus et tram) sans cle : arrets du GTFS, departs du
   GTFS-RT, verifie sur donnees reelles (Massena -> Gare Thiers, tram L1).
-- [ ] Trains supprimes et code 429 observes sur donnees reelles.
+- [x] Retards et trains supprimes geres et observes sur donnees reelles
+  (train 881227 : 13:46 -> 17:26; trains 6168, 881142, 6180 retires).
+- [ ] Code 429 (quota) observe.
 - [x] Issue #2 : doublons, TLS, fraicheur et limites documentes
   (`docs/DATA_RELIABILITY.md`).
 
@@ -45,9 +49,11 @@ Lignes d'Azur des Alpes-Maritimes.
 ## Widget (issue #6)
 
 - [x] Premier widget Glance par trajet, configuration a l'ajout (#19).
-- [x] Widget refait : compte a rebours natif, tailles 2x2 et 4x2.
-- [ ] Nouveau widget valide par Guillaume.
-- [ ] Ajout, redimensionnement, deux instances et ecran eteint observes sur OPPO.
+- [x] Widgets 2x2, 4x2 et tableau 4x3 (badge du mode, depart -> arrivee, retard
+  barre, suppressions optionnelles), configuration facultative (#25).
+- [x] Ajout de widgets, plusieurs instances et rendu observes sur OPPO (2026-10-10).
+- [x] Parametres de l'appli appliques aux widgets automatiquement, toggles ⏱ et ⌂.
+- [ ] Comportement ecran eteint et economie d'energie OPPO observe.
 
 ## Rappels (issue #7)
 
