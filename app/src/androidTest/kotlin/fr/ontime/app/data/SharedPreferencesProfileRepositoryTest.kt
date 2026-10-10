@@ -155,6 +155,27 @@ class SharedPreferencesProfileRepositoryTest {
         }
     }
 
+    @Test
+    fun nonCanonicalJsonIsRejectedAndPreserved() {
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        val fields = "\"stopId\":\"s\",\"lineId\":\"l\",\"direction\":\"d\",\"walkingMinutes\":7,\"marginMinutes\":2"
+        listOf(
+            "[{id:\"p\",$fields}]",
+            "[{'id':'p',$fields}]",
+            "[{\"id\":\"p\",/*c*/$fields}]",
+            "[{\"id\":\"p\",$fields,\"extra\":1}]",
+            "[{\"id\":\"x\",\"id\":\"p\",$fields}]",
+            " [] ",
+        ).forEach { invalid ->
+            assertTrue(preferences.edit().putString("profiles", invalid).commit())
+            val repository = SharedPreferencesProfileRepository(context)
+
+            assertEquals(invalid, ProfileSnapshot.StorageError, repository.snapshot())
+            assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
+            assertEquals(invalid, preferences.getString("profiles", null))
+        }
+    }
+
     private fun draft(line: String) = ProfileDraft(
         stopId = "demo:stop",
         lineId = line,

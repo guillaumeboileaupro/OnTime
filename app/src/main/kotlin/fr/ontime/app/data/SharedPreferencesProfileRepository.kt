@@ -75,9 +75,7 @@ class SharedPreferencesProfileRepository(
 
     private fun readData(): ProfileSnapshot.Data? = runCatching {
         val raw = preferences.getString(KEY_PROFILES, "[]")
-        require(raw != null && hasOnlyWhitespaceAfterArray(raw))
-        val tokener = JSONTokener(raw)
-        val array = tokener.nextValue()
+        val array = JSONTokener(requireNotNull(raw)).nextValue()
         require(array is JSONArray)
         val profiles = buildList {
             repeat(array.length()) { index ->
@@ -96,37 +94,10 @@ class SharedPreferencesProfileRepository(
         val selected = preferences.getString(KEY_SELECTED, null)
         require(selected == null || profiles.any { it.id == selected })
         require(profiles.map { it.id }.distinct().size == profiles.size)
+        // Only write() produces this payload: any non-canonical form is foreign data.
+        require(raw == encode(profiles))
         ProfileSnapshot.Data(profiles, selected)
     }.getOrNull()
-
-    private fun hasOnlyWhitespaceAfterArray(raw: String): Boolean {
-        val start = raw.indexOfFirst { !it.isWhitespace() }
-        if (start < 0 || raw[start] != '[') return false
-        var depth = 0
-        var inString = false
-        var escaped = false
-        for (index in start until raw.length) {
-            val character = raw[index]
-            if (inString) {
-                when {
-                    escaped -> escaped = false
-                    character == '\\' -> escaped = true
-                    character == '"' -> inString = false
-                }
-                continue
-            }
-            when (character) {
-                '"' -> inString = true
-                '[' -> depth += 1
-                ']' -> {
-                    depth -= 1
-                    if (depth == 0) return raw.substring(index + 1).all { it.isWhitespace() }
-                    if (depth < 0) return false
-                }
-            }
-        }
-        return false
-    }
 
     private fun JSONObject.exactInt(key: String): Int {
         val value = get(key)
@@ -140,7 +111,13 @@ class SharedPreferencesProfileRepository(
         return value
     }
 
-    private fun write(profiles: List<TravelProfile>, selectedId: String?): Boolean {
+    private fun write(profiles: List<TravelProfile>, selectedId: String?): Boolean =
+        preferences.edit()
+            .putString(KEY_PROFILES, encode(profiles))
+            .apply { if (selectedId == null) remove(KEY_SELECTED) else putString(KEY_SELECTED, selectedId) }
+            .commit()
+
+    private fun encode(profiles: List<TravelProfile>): String {
         val array = JSONArray()
         profiles.forEach { profile ->
             array.put(
@@ -153,10 +130,7 @@ class SharedPreferencesProfileRepository(
                     .put("marginMinutes", profile.marginMinutes),
             )
         }
-        return preferences.edit()
-            .putString(KEY_PROFILES, array.toString())
-            .apply { if (selectedId == null) remove(KEY_SELECTED) else putString(KEY_SELECTED, selectedId) }
-            .commit()
+        return array.toString()
     }
 
     companion object {
