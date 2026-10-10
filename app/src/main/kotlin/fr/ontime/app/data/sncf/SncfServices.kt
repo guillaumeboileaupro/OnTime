@@ -11,8 +11,16 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 
-/** Result of one refresh for a trip, shared by the home screen and widgets. */
-data class TripUpdate(val selection: Selection, val upcoming: List<Departure>, val checkedAt: Instant)
+/**
+ * Result of one refresh for a trip, shared by the home screen, widgets and
+ * reminders: [departures] is everything fetched, [upcoming] what is still reachable.
+ */
+data class TripUpdate(
+    val selection: Selection,
+    val upcoming: List<Departure>,
+    val checkedAt: Instant,
+    val departures: List<Departure> = emptyList(),
+)
 
 /**
  * SNCF use cases sharing one client, quota budget and departure cache for the
@@ -36,7 +44,7 @@ class SncfServices private constructor(apiKey: String, private val clock: Clock)
         } else {
             emptyList()
         }
-        return TripUpdate(selection, upcoming, now)
+        return TripUpdate(selection, upcoming, now, fetched.departures)
     }
 
     companion object {

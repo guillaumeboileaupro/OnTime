@@ -51,6 +51,14 @@ import fr.ontime.app.data.SharedPreferencesProfileRepository
 import fr.ontime.app.data.TripLabels
 import fr.ontime.app.data.sncf.SncfServices
 import fr.ontime.app.widget.TripWidget
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import fr.ontime.app.reminders.ReminderScheduler
+import fr.ontime.app.reminders.ReminderStore
+import fr.ontime.domain.Departure
+import fr.ontime.domain.reminderAt
 import androidx.glance.appwidget.updateAll
 import fr.ontime.app.data.LegacyTripMigration
 import fr.ontime.app.data.SharedPreferencesLegacyTripStore
@@ -91,6 +99,24 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
         data.profiles.firstOrNull { it.id == data.selectedProfileId }
     }
     var homeState by remember { mutableStateOf<HomeState>(HomeState.Loading) }
+    val reminders = remember { ReminderStore(applicationContext) }
+    val scheduler = remember { ReminderScheduler(applicationContext) }
+    var reminderNote by remember { mutableStateOf<String?>(null) }
+    var pendingReminder by remember { mutableStateOf<Departure?>(null) }
+
+    fun remind(departure: Departure) {
+        val current = trip ?: return
+        reminders.setPlanned(current.id, departure)
+        scheduler.schedule(current.id, ReminderScheduler.ACTION_NOTIFY, current.reminderAt(departure))
+        reminderNote = "Rappel prévu à ${TimeFormat.format(current.reminderAt(departure))}" +
+            if (scheduler.canBeExact()) "." else " (approximatif : alarmes exactes non autorisées)."
+    }
+
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        val departure = pendingReminder
+        pendingReminder = null
+        if (granted && departure != null) remind(departure) else reminderNote = "Notifications refusées : aucun rappel possible."
+    }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -106,6 +132,8 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
             }
             revision += 1
         }
+        val trips = (profileRepository.snapshot() as? ProfileSnapshot.Data)?.profiles.orEmpty()
+        scheduler.planAll(trips, reminders)
     }
 
     LaunchedEffect(revision) {
@@ -191,6 +219,15 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
                         clock = clock,
                         onOpenTrips = { screen = Screen.Trips },
                         onRefresh = { refresh += 1 },
+                        reminderNote = reminderNote,
+                        onRemind = { departure ->
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                pendingReminder = departure
+                                notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            } else {
+                                remind(departure)
+                            }
+                        },
                     )
                     Screen.Trips -> TripsScreen(profileRepository, labels, snapshot, { revision += 1 }, sncf)
                     Screen.About -> AboutScreen()

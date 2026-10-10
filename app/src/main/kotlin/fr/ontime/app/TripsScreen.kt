@@ -1,6 +1,18 @@
 package fr.ontime.app
 
 import android.Manifest
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material3.Switch
+import fr.ontime.app.reminders.ReminderScheduler
+import fr.ontime.app.reminders.ReminderStore
+import fr.ontime.domain.ReminderWindow
+import java.time.DayOfWeek
+import java.time.LocalTime
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
@@ -52,6 +64,11 @@ private val ButtonHeight = Modifier.heightIn(min = 48.dp)
 private const val LABEL_SEPARATOR = " → "
 private const val BUSY_MESSAGE = "Limite de requêtes SNCF atteinte : réessayez dans une minute."
 private const val ERROR_MESSAGE = "Recherche impossible pour le moment."
+private val WorkingDays = setOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY)
+private val DayLabels = listOf("Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim")
+
+private fun parseTime(text: String): LocalTime? =
+    runCatching { LocalTime.parse(text.trim().replace('h', ':').padStart(5, '0')) }.getOrNull()
 
 @Composable
 fun TripsScreen(
@@ -83,10 +100,19 @@ fun TripsScreen(
     var message by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
     var formOpen by remember { mutableStateOf(false) }
+    var remindOn by remember { mutableStateOf(false) }
+    var remindDays by remember { mutableStateOf(WorkingDays) }
+    var remindFrom by remember { mutableStateOf("07:30") }
+    var remindTo by remember { mutableStateOf("09:00") }
     val context = LocalContext.current
     val locator = remember { DeviceLocator(context.applicationContext) }
     val scope = rememberCoroutineScope()
     val focus = LocalFocusManager.current
+    val reminders = remember { ReminderStore(context.applicationContext) }
+    val scheduler = remember { ReminderScheduler(context.applicationContext) }
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (!granted) message = "Notifications refusées : les rappels ne pourront pas s'afficher."
+    }
 
     fun reset() {
         formOpen = false
@@ -100,6 +126,10 @@ fun TripsScreen(
         directions = emptyList()
         walking = "10"
         margin = "2"
+        remindOn = false
+        remindDays = WorkingDays
+        remindFrom = "07:30"
+        remindTo = "09:00"
     }
 
     fun load(profile: TravelProfile) {
@@ -111,6 +141,12 @@ fun TripsScreen(
         destination = NearbyStation(profile.destinationId, label.substringAfter(LABEL_SEPARATOR, "Destination enregistrée"))
         walking = profile.walkingMinutes.toString()
         margin = profile.marginMinutes.toString()
+        reminders.window(profile.id)?.let { window ->
+            remindOn = true
+            remindDays = window.days
+            remindFrom = window.start.toString()
+            remindTo = window.end.toString()
+        }
     }
 
     fun runLookup(lookup: () -> StationSearchResult, onFound: (List<NearbyStation>) -> Unit) {
@@ -294,12 +330,63 @@ fun TripsScreen(
                 NumberField("Marge (min)", margin, Modifier.weight(1f)) { margin = it }
             }
 
+            StepTitle("4. Rappels")
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Text(
+                    "Me prévenir 5 min avant de partir",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = remindOn,
+                    onCheckedChange = { on ->
+                        remindOn = on
+                        if (on && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    },
+                )
+            }
+            if (remindOn) {
+                ReminderDays(remindDays) { remindDays = it }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    TimeField("Partir dès", remindFrom, Modifier.weight(1f)) { remindFrom = it }
+                    TimeField("Jusqu'à", remindTo, Modifier.weight(1f)) { remindTo = it }
+                }
+                if (!scheduler.canBeExact() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    Text(
+                        "Rappels approximatifs (quelques minutes) tant que les alarmes exactes ne sont pas autorisées.",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    OutlinedButton(
+                        onClick = {
+                            context.startActivity(
+                                Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}")),
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth().then(ButtonHeight),
+                    ) { Text("Autoriser les alarmes exactes", style = MaterialTheme.typography.labelLarge) }
+                }
+            }
+
             Button(
                 enabled = origin != null && destination != null && !busy,
                 onClick = {
                     focus.clearFocus()
                     val from = requireNotNull(origin)
                     val to = requireNotNull(destination)
+                    val window = if (remindOn) {
+                        val start = parseTime(remindFrom)
+                        val end = parseTime(remindTo)
+                        ReminderWindow(remindDays, start ?: LocalTime.MIN, end ?: LocalTime.MIN)
+                            .takeIf { start != null && end != null && it.isValid }
+                            ?: run {
+                                message = "Rappels : choisissez au moins un jour et une plage horaire valide (ex. 07:30 à 09:00)."
+                                return@Button
+                            }
+                    } else {
+                        null
+                    }
                     val draft = ProfileDraft(
                         stopId = from.stopAreaId,
                         destinationId = to.stopAreaId,
@@ -310,6 +397,9 @@ fun TripsScreen(
                     message = when (result) {
                         is ProfileChange.Success -> {
                             labels.put(result.profile.id, "${shortName(from.name)}$LABEL_SEPARATOR${shortName(to.name)}")
+                            reminders.setWindow(result.profile.id, window)
+                            if (window == null) scheduler.cancel(result.profile.id, ReminderScheduler.ACTION_PLAN)
+                            scheduler.planAll(listOf(result.profile), reminders)
                             val selection = repository.select(result.profile.id)
                             onChanged()
                             reset()
@@ -340,6 +430,7 @@ fun TripsScreen(
                             message = when (repository.delete(id)) {
                                 ProfileCommandResult.Success -> {
                                     labels.remove(id)
+                                    scheduler.forget(id, reminders)
                                     reset()
                                     onChanged()
                                     "Trajet supprimé."
@@ -355,6 +446,38 @@ fun TripsScreen(
         }
         message?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
     }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ReminderDays(selected: Set<DayOfWeek>, onChange: (Set<DayOfWeek>) -> Unit) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        DayOfWeek.entries.forEachIndexed { index, day ->
+            val on = day in selected
+            val toggle = { onChange(if (on) selected - day else selected + day) }
+            if (on) {
+                Button(onClick = toggle, modifier = ButtonHeight) { Text(DayLabels[index], style = MaterialTheme.typography.labelLarge) }
+            } else {
+                OutlinedButton(onClick = toggle, modifier = ButtonHeight) { Text(DayLabels[index], style = MaterialTheme.typography.labelLarge) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimeField(label: String, value: String, modifier: Modifier, onValueChange: (String) -> Unit) {
+    val focus = LocalFocusManager.current
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        modifier = modifier,
+        singleLine = true,
+        isError = parseTime(value) == null,
+        textStyle = MaterialTheme.typography.bodyLarge,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
+    )
 }
 
 @Composable
