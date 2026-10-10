@@ -45,7 +45,7 @@ import fr.ontime.app.Paper
 import fr.ontime.app.TimeFormat
 import fr.ontime.app.data.SharedPreferencesProfileRepository
 import fr.ontime.app.data.TripLabels
-import fr.ontime.app.data.sncf.SncfServices
+import fr.ontime.app.data.Transport
 import fr.ontime.app.data.sncf.TripUpdate
 import fr.ontime.app.shortLabel
 import fr.ontime.domain.ProfileSnapshot
@@ -73,14 +73,14 @@ class TripWidget : GlanceAppWidget() {
         val tripId = getAppWidgetState(context, PreferencesGlanceStateDefinition, id)[TRIP_KEY]
         val trip = (SharedPreferencesProfileRepository(context).snapshot() as? ProfileSnapshot.Data)
             ?.profiles?.firstOrNull { it.id == tripId }
-        val sncf = SncfServices.shared()
+        val update = trip?.let { withContext(Dispatchers.IO) { Transport.tripUpdate(context, it) } }
         val content = when {
             trip == null -> WidgetContent.NoTrip
-            sncf == null -> WidgetContent.NoKey
+            update == null -> WidgetContent.NoKey
             else -> WidgetContent.Ready(
                 label = TripLabels(context).get(trip.id)?.let(::shortLabel) ?: "Trajet",
                 trip = trip,
-                update = withContext(Dispatchers.IO) { sncf.tripUpdate(trip) },
+                update = update,
             )
         }
         // Refresh just after the shown leave time so the widget moves to the next train.
