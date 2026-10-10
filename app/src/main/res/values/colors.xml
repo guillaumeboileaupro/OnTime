@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ontime_paper">#dfdcd3</color>
-    <color name="ontime_ink">#2a2926</color>
+    <!-- Measured on assets/branding/ontime-logo.png; keep in sync with Palette.kt. -->
+    <color name="ontime_paper">#DDD9D0</color>
+    <color name="ontime_ink">#282828</color>
 </resources>

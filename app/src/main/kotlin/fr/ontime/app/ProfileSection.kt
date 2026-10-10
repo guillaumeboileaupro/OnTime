@@ -22,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import fr.ontime.app.data.DeviceLocator
@@ -43,9 +42,6 @@ import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-private val ProfilePaper = Color(0xFFDFDCD3)
-private val ProfileInk = Color(0xFF2A2926)
 
 @Composable
 fun ProfileSection(
@@ -131,13 +127,13 @@ fun ProfileSection(
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth().border(2.dp, ProfileInk).padding(16.dp),
+        modifier = Modifier.fillMaxWidth().border(2.dp, Ink).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text("PROFILS — FIXTURES LOCALES", color = ProfileInk)
-        Text("Persistés sur cet appareil. Départs : fixtures.", color = ProfileInk)
+        Text("PROFILS — FIXTURES LOCALES", color = Ink)
+        Text("Persistés sur cet appareil. Départs : fixtures.", color = Ink)
         if (snapshot == ProfileSnapshot.StorageError) {
-            Text("Erreur de lecture du stockage des profils.", color = ProfileInk)
+            Text("Erreur de lecture du stockage des profils.", color = Ink)
         }
         profiles.forEach { profile ->
             val selected = profile.id == selectedId
@@ -157,7 +153,7 @@ fun ProfileSection(
             ) {
                 Text(
                     "${if (selected) "●" else "○"} ${profile.lineId} · ${profile.direction}",
-                    color = ProfileInk,
+                    color = Ink,
                 )
             }
         }
@@ -169,22 +165,22 @@ fun ProfileSection(
                         it.directionId == profile.direction
                 }
                 if (departure == null) {
-                    Text("Aucun départ fixture compatible à calculer.", color = ProfileInk)
+                    Text("Aucun départ fixture compatible à calculer.", color = Ink)
                 } else {
                     val leave = HomeDepartureCalculator(clock).calculate(departure.departureAt, profile)
                     if (leave.timeUntilLeave.isNegative) {
-                        Text("Aucun départ fixture compatible à calculer.", color = ProfileInk)
+                        Text("Aucun départ fixture compatible à calculer.", color = Ink)
                     } else {
                         val formatted = DateTimeFormatter.ofPattern("HH:mm")
                             .withZone(ZoneId.of("Europe/Paris"))
                             .format(leave.leaveAt)
-                        Text("Départ de chez soi : $formatted (fixture)", color = ProfileInk)
+                        Text("Départ de chez soi : $formatted (fixture)", color = Ink)
                     }
                 }
             }
         }
         if (nearestStation == null) {
-            Text("Gare la plus proche : clé SNCF absente de ce build.", color = ProfileInk)
+            Text("Gare la plus proche : clé SNCF absente de ce build.", color = Ink)
         } else {
             OutlinedButton(
                 enabled = !locating,
@@ -194,7 +190,7 @@ fun ProfileSection(
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Gare la plus proche et marche", color = ProfileInk) }
+            ) { Text("Gare la plus proche et marche", color = Ink) }
         }
         ProfileField("Arrêt", stop) { stop = it }
         ProfileField("Ligne", line) { line = it }
@@ -232,12 +228,12 @@ fun ProfileSection(
                         ProfileChange.StorageError -> "Erreur de stockage"
                     }
                 },
-                colors = ButtonDefaults.buttonColors(ProfileInk, ProfilePaper),
+                colors = ButtonDefaults.buttonColors(Ink, Paper),
             ) { Text(if (editingId == null) "Créer" else "Modifier") }
             OutlinedButton(onClick = {
                 editingId = null
                 message = "Nouveau profil"
-            }) { Text("Nouveau", color = ProfileInk) }
+            }) { Text("Nouveau", color = Ink) }
             editingId?.let { id ->
                 OutlinedButton(onClick = {
                     message = when (repository.delete(id)) {
@@ -249,10 +245,10 @@ fun ProfileSection(
                         ProfileCommandResult.NotFound -> "Profil introuvable"
                         ProfileCommandResult.StorageError -> "Erreur de stockage"
                     }
-                }) { Text("Supprimer", color = ProfileInk) }
+                }) { Text("Supprimer", color = Ink) }
             }
         }
-        message?.let { Text(it, color = ProfileInk) }
+        message?.let { Text(it, color = Ink) }
     }
 }
 
