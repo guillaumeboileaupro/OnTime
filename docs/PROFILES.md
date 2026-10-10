@@ -50,4 +50,6 @@ emulateur ne remplace pas une observation apres arret force ou redemarrage d'un
 OPPO reel.
 
 Les identifiants de profils persistes doivent etre uniques; un doublon est une
-erreur de stockage et le contenu d'origine est conserve.
+erreur de stockage et le contenu d'origine est conserve. Une collision de l'ID
+genere a la creation est refusee avant ecriture. Un identifiant selectionne doit
+referencer un profil existant, sinon le stockage est signale invalide sans mutation.
