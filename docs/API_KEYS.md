@@ -37,14 +37,28 @@ Licence Ouverte 2.0.
 | Source | Usage | Acces |
 |---|---|---|
 | API SNCF (Navitia) `https://api.sncf.com/v1/coverage/sncf/stop_areas/<id>/departures` | Prochains departs d'une gare, recherche de gares, perturbations | Cle gratuite : inscription sur https://numerique.sncf.com/startup/api/, recue par e-mail; authentification HTTP basic avec la cle comme utilisateur. Verifier le quota a l'inscription |
-| GTFS-RT national `https://proxy.transport.data.gouv.fr/resource/sncf-gtfs-rt-trip-updates` | Retards, trains des 60 prochaines minutes, mis a jour toutes les 2 min | Libre, sans cle |
-| GTFS statique national (jeu `horaires-sncf`) | Horaires theoriques et identifiants | Libre, sans cle |
+| GTFS-RT trip updates `https://proxy.transport.data.gouv.fr/resource/sncf-gtfs-rt-trip-updates` | Retards (protobuf, ~750 Ko), trains des 60 prochaines minutes, toutes les 2 min | Libre, sans cle; rapprocher `trip_id` du GTFS statique |
+| SIRI ET Lite (beta) `https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-estimated-timetable` | Meme perimetre en XML autonome : ligne, destination, horaire prevu et estime par gare (~13 Mo national) | Libre, sans cle |
+| GTFS-RT service alerts / SIRI SX Lite (`sncf-gtfs-rt-service-alerts`, `sncf-siri-lite-situation-exchange`) | Messages d'incident; identifiant commun = numero commercial du train | Libre, sans cle |
+| GTFS statique `https://eu.ftp.opendatasoft.com/sncf/plandata/Export_OpenData_SNCF_GTFS_NewTripId.zip` | Horaires theoriques 151 jours, adaptations connues la veille a 17h | Libre, sans cle, ODbL |
 
-- L'API SNCF par gare est recommandee : une requete par gare, sans charger le
-  flux national.
-- Couverture temps reel garantie seulement pour TGV et Intercites. Les TER de
-  la societe dediee SNCF Voyageurs Sud Azur manquaient au GTFS-RT fin 2024 :
-  verifier sur une vraie gare et etiqueter theorique ce qui n'est pas confirme.
+Le catalogue `https://ressources.data.sncf.com/api/explore/v2.1` ne fournit pas
+lui-meme de temps reel : son jeu `horaires-sncf` renvoie vers les flux ci-dessus.
+Les jeux `regularite-mensuelle-*` sont des statistiques, pas des retards en direct.
+
+Verifie le 2026-10-10 (09:18 UTC) : le SIRI ET Lite contenait 30 courses par
+Nice-Ville (UIC `87756056`), dont les TER Grasse - Cannes - Nice - Vintimille,
+Les Arcs - Cannes - Nice - Menton et Nice - Tende, avec des retards estimes
+(+10, +20 min). Le GTFS-RT trip updates citait aussi cette gare. Le perimetre
+reste garanti seulement pour TGV et Intercites : conserver l'etiquette
+theorique quand aucune estimation n'est publiee.
+
+Choix recommande :
+- par gare, leger : API SNCF (cle) `.../stop_areas/<id>/departures`;
+- sans cle : GTFS-RT trip updates + GTFS statique, rafraichi au plus toutes
+  les 2 min et seulement quand l'ecran ou le widget en a besoin. Eviter de
+  telecharger les 13 Mo du SIRI ET Lite depuis le telephone a chaque
+  rafraichissement.
 
 ## Ou mettre les cles
 
