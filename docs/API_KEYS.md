@@ -93,8 +93,9 @@ proche a 1093 m a vol d'oiseau, trajet pieton SNCF de 1224 s pour 1307 m.
 | Recherche de gare par nom | `/places?q=<nom>&type[]=stop_area&count=8` | 1 |
 | Gare la plus proche + marche | `places_nearby` puis `journeys` pieton | 2 |
 
-Budget partage : seau de 4 jetons, un jeton gagne toutes les 20 s (au plus
-4324 appels par 24 h). Verifie le 2026-10-10 entre deux gares publiques : les
+Budget partage : seau de 20 jetons, un jeton gagne toutes les 18 s (au plus
+4820 appels par 24 h), pour qu'une recherche de trajet ne soit jamais bloquee.
+Migration des anciens trajets : `/routes/<id>` (1 appel par ancien trajet, une fois). Verifie le 2026-10-10 entre deux gares publiques : les
 sections `public_transport` de `/journeys` portent `vehicle_journey`, `line`,
 `route`, `physical_mode`, `data_freshness`, depart et arrivee; 15 routes listees
 pour une grande gare.

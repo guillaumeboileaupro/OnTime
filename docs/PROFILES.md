@@ -84,3 +84,11 @@ de nom (`/places`). L'accueil affiche les trains directs (`/journeys`,
 `max_nb_transfers=0`) avec l'heure d'arrivee. Les trajets sont stockes dans
 `ontime_trips`; l'ancien fichier `ontime_profiles` n'est plus lu. Les noms
 lisibles des trajets sont gardes a part (`ontime_trip_labels`).
+
+Les trajets enregistres au format precedent (gare + ligne + route) sont
+convertis au demarrage : le terminus de la route (`/routes/<id>`) devient la
+destination. Tous les terminus sont resolus avant toute ecriture; l'ancien
+fichier n'est efface qu'apres conversion complete, sinon nouvel essai au
+lancement suivant. Les trajets de demonstration (identifiants `demo:`) sont
+abandonnes. Regle : tout futur changement de format convertit les trajets
+existants, jamais d'effacement silencieux.
