@@ -104,7 +104,6 @@ class HomeScreenTest {
         }
         composeRule.onNode(hasText("Partir dans") and isHeading()).assertExists()
         composeRule.onNodeWithText("3 min").assertIsDisplayed()
-        composeRule.onNode(hasText("Actualiser") and hasClickAction(), useUnmergedTree = true).assertExists()
         composeRule.onNode(hasClickAction() and hasText("Actualiser", substring = true))
             .assertHeightIsAtLeast(48.dp)
     }
