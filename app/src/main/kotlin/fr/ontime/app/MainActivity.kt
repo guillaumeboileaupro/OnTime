@@ -199,7 +199,7 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
                         onRefresh = { refresh += 1 },
                     )
                     Screen.Trips -> TripsScreen(profileRepository, labels, snapshot, { revision += 1 }, sncf)
-                    Screen.About -> AboutScreen(sncf != null)
+                    Screen.About -> AboutScreen()
                 }
             }
         }
@@ -207,17 +207,11 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
 }
 
 @Composable
-private fun AboutScreen(hasKey: Boolean) {
+private fun AboutScreen() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("OnTime ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.titleLarge)
-        Text(
-            if (hasKey) "Horaires, gares et temps de marche : API SNCF." else "Clé SNCF absente de cette version.",
-            style = MaterialTheme.typography.bodyLarge,
-        )
-        Text(
-            "Les horaires sont actualisés chaque minute sur l'accueil, dans la limite du quota SNCF.",
-            style = MaterialTheme.typography.bodyLarge,
-        )
+        Text("Les horaires sont actualisés chaque minute.", style = MaterialTheme.typography.bodyLarge)
         Text("Votre position n'est jamais enregistrée.", style = MaterialTheme.typography.bodyLarge)
+        Text("© 2026 Guillaume Boileau. Tous droits réservés.", style = MaterialTheme.typography.bodyMedium)
     }
 }
