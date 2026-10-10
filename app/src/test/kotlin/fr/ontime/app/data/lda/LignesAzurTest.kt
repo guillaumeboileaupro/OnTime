@@ -91,13 +91,15 @@ class LignesAzurTest {
 
         val snapshot = source.fetchTrip("lda:place_A", "lda:place_B")
         assertEquals(Status.Available, snapshot.status)
-        // t2 skips B, t4 runs the other way: only t1 and the cancelled t3 remain.
-        assertEquals(listOf("t3", "t1"), snapshot.departures.map { it.journeyId })
+        // t2 skips B (cancelled for this trip), t4 runs the other way.
+        assertEquals(listOf("t2", "t3", "t1"), snapshot.departures.map { it.journeyId })
+        assertEquals("Arrêt non desservi", snapshot.departures.first().disruption)
+        assertTrue(snapshot.departures.first().cancelled)
         val bus = snapshot.departures.last()
         assertEquals(Mode.Bus, bus.mode)
         assertEquals("Terminus", bus.destination)
         assertEquals(Instant.ofEpochSecond(1_791_631_200), bus.arrivalAt)
-        assertTrue(snapshot.departures.first().cancelled)
+        assertEquals("Course supprimée", snapshot.departures[1].disruption)
         assertEquals(listOf("Gare, Bêta", "Terminus"), source.directionsFrom("lda:place_A")?.map { it.name })
         assertEquals(listOf("t4"), source.fetchTrip("lda:place_B", "lda:place_A").departures.map { it.journeyId })
         assertEquals(Status.Empty, source.fetchTrip("lda:place_T", "lda:place_A").status)

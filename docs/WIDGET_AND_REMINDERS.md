@@ -11,6 +11,12 @@ compte a rebours : Android n'actualise pas un widget a la minute en arriere-plan
 Actualisation aussi a la demande et quand un trajet change dans l'appli.
 Appli et widgets partagent un seul client SNCF, budget de quota et cache.
 
+Trois widgets : 2x2, 4x2 et tableau des departs 4x3 (badge TRAIN / TRAM L1 /
+BUS 12, depart -> arrivee, retard « +N », heure de quitter la maison).
+Configuration facultative : sans choix, le widget suit le trajet de l'accueil.
+Parametres (menu) : compte a rebours, heure de depart de chez soi, trains
+supprimes (desactive par defaut sur le widget; l'accueil les signale toujours).
+
 ## Rappels (issue #7)
 
 - Choix de Guillaume : creneaux reguliers par trajet (jours + plage horaire de

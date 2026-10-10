@@ -87,10 +87,12 @@ internal fun departureOf(
     stops: AzurStops,
     fetchedAt: Instant,
 ): Departure? {
-    val ordered = trip.stops.filter { !it.skipped }.sortedBy { it.sequence }
+    val ordered = trip.stops.sortedBy { it.sequence }
     val from = ordered.indexOfFirst { stops.placeOf(it.stopId) == originId }
     if (from < 0) return null
     val to = ordered.drop(from + 1).firstOrNull { stops.placeOf(it.stopId) == destinationId } ?: return null
+    // A vehicle that skips the user's origin or destination is cancelled for this trip.
+    val skipsTrip = ordered[from].skipped || to.skipped
     val leaving = ordered[from].departure ?: ordered[from].arrival ?: return null
     val arriving = to.arrival ?: to.departure
     val terminus = trip.stops.maxByOrNull { it.sequence }?.let { stops.placeOf(it.stopId) } ?: destinationId
@@ -105,7 +107,12 @@ internal fun departureOf(
         departureAt = Instant.ofEpochSecond(leaving),
         fetchedAt = fetchedAt,
         quality = Quality.Realtime,
-        cancelled = trip.cancelled,
+        cancelled = trip.cancelled || skipsTrip,
+        disruption = when {
+            trip.cancelled -> "Course supprimée"
+            skipsTrip -> "Arrêt non desservi"
+            else -> null
+        },
         arrivalAt = arriving?.let(Instant::ofEpochSecond),
     )
 }

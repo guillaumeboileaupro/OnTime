@@ -15,8 +15,16 @@
 
 - Temps reel garanti par la SNCF seulement pour TGV et Intercites; un TER sans
   estimation est affiche « Horaire prevu (sans temps reel) ».
-- La representation d'un train supprime dans `/journeys` n'a pas ete observee :
-  un train absent de la reponse n'est simplement plus propose.
+- Suppressions SNCF : la SNCF retire le train de la reponse temps reel au lieu
+  de le marquer (observe le 2026-10-10 : trains 6168, 881142 et 6180 presents
+  dans l'horaire prevu, absents du temps reel et du tableau des departs). L'appli
+  compare donc `/journeys` temps reel et horaire prevu (`base_schedule`, mis en
+  cache 10 min) : un train prevu absent du temps reel, dans la periode couverte,
+  est affiche « supprime ». Retard = depart reel - `base_departure_date_time`;
+  cause lue dans les `disruptions` liees a la section.
+- Lignes d'Azur : courses `CANCELED` et arrets `SKIPPED` (depart ou arrivee)
+  affiches supprimes; le flux ne publie pas l'horaire prevu, donc pas de retard
+  chiffre pour le bus et le tram.
 - Code 429 (quota) non observe; le quota est garanti cote appli (<= 4820/jour).
 - Cache en memoire uniquement : apres arret de l'appli, il faut le reseau.
 - Lignes d'Azur non integre (issue #4).

@@ -86,7 +86,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 return
             }
             is ReminderDecision.Notify ->
-                notifier.notifyDeparture(trip, label, decision.departure, decision.confirmed, decision.replacement)
+                notifier.notifyDeparture(trip, label, decision.departure, decision.confirmed, decision.replacement, planned)
             ReminderDecision.NoTrain -> notifier.notifyNoTrain(trip, label)
         }
         store.setPlanned(trip.id, null)

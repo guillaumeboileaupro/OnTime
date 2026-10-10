@@ -34,7 +34,12 @@ sealed interface HomeState {
     data object NoKey : HomeState
     data object NoTrip : HomeState
     data object Loading : HomeState
-    data class Ready(val selection: Selection, val checkedAt: Instant) : HomeState
+    data class Ready(
+        val selection: Selection,
+        val checkedAt: Instant,
+        /** Cancelled departures before the recommended one, to warn about. */
+        val cancelled: List<Departure> = emptyList(),
+    ) : HomeState
 }
 
 @Composable
@@ -66,7 +71,10 @@ fun HomeScreen(
                     "Choisissez votre gare et votre direction pour savoir quand partir de chez vous.",
                 )
                 HomeState.Loading -> StateCard("Recherche des horaires…", "Interrogation de la SNCF en cours.")
-                is HomeState.Ready -> SelectionContent(state.selection, requireNotNull(trip), clock)
+                is HomeState.Ready -> {
+                    state.cancelled.forEach { CancelledLine(it) }
+                    SelectionContent(state.selection, requireNotNull(trip), clock)
+                }
             }
         }
         val next = (state as? HomeState.Ready)?.selection?.departure
@@ -124,10 +132,26 @@ private fun DepartureCard(departure: Departure, trip: TravelProfile, clock: Cloc
             (departure.arrivalAt?.let { ", arrivée ${TimeFormat.format(it)}" } ?: ""),
         style = MaterialTheme.typography.bodyLarge,
     )
+    departure.delayMinutes?.let { delay ->
+        Text(
+            "En retard de $delay min (prévu ${TimeFormat.format(requireNotNull(departure.scheduledAt))})",
+            style = MaterialTheme.typography.titleMedium,
+        )
+    }
+    departure.disruption?.let { Text("Cause : $it", style = MaterialTheme.typography.bodyMedium) }
     Text("Direction ${shortName(departure.destination)}", style = MaterialTheme.typography.bodyMedium)
     Text(
         "${sourceLabel(departure.provider)} · ${qualityLabel(departure.quality)} · ${walkAndMargin(trip)}",
         style = MaterialTheme.typography.bodyMedium,
+    )
+}
+
+@Composable
+private fun CancelledLine(departure: Departure) {
+    Text(
+        "⚠ ${modeLabel(departure.mode)} de ${TimeFormat.format(departure.departureAt)} supprimé" +
+            (departure.disruption?.let { " ($it)" } ?: ""),
+        style = MaterialTheme.typography.titleMedium,
     )
 }
 

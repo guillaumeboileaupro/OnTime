@@ -19,20 +19,34 @@ class DepartureNotifier(private val context: Context) {
 
     fun canNotify(): Boolean = manager.areNotificationsEnabled()
 
-    fun notifyDeparture(trip: TravelProfile, label: String, departure: Departure, confirmed: Boolean, replacement: Boolean) {
+    fun notifyDeparture(
+        trip: TravelProfile,
+        label: String,
+        departure: Departure,
+        confirmed: Boolean,
+        replacement: Boolean,
+        planned: Departure? = null,
+    ) {
         val leave = TimeFormat.format(trip.leaveAt(departure))
         val arrival = departure.arrivalAt?.let { ", arrivée ${TimeFormat.format(it)}" } ?: ""
-        val title = if (replacement) "Train remplacé : partez à $leave" else "Partez à $leave"
+        val title = when {
+            replacement -> "Train supprimé : partez à $leave"
+            departure.delayMinutes != null -> "Retard de ${departure.delayMinutes} min : partez à $leave"
+            else -> "Partez à $leave"
+        }
         val text = buildString {
-            append("$label · train ${TimeFormat.format(departure.departureAt)}$arrival")
-            if (replacement) append(". Le train prévu n'est plus annoncé.")
+            if (replacement && planned != null) {
+                append("Votre train de ${TimeFormat.format(planned.departureAt)} est supprimé. Prochain : ")
+            }
+            append("$label · ${TimeFormat.format(departure.departureAt)}$arrival")
+            departure.disruption?.let { append(" · $it") }
             if (!confirmed) append(" (horaire non confirmé, connexion indisponible)")
         }
         post(trip.id, title, text)
     }
 
     fun notifyNoTrain(trip: TravelProfile, label: String) {
-        post(trip.id, "Aucun train à prendre", "$label : le train prévu n'est plus annoncé et aucun autre train direct n'est proposé.")
+        post(trip.id, "Aucun train à prendre", "$label : votre train est supprimé et aucun autre départ direct n'est annoncé.")
     }
 
     private fun post(tripId: String, title: String, text: String) {

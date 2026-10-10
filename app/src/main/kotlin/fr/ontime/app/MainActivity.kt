@@ -61,6 +61,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import fr.ontime.app.reminders.ReminderScheduler
 import fr.ontime.app.reminders.ReminderStore
 import fr.ontime.domain.Departure
+import fr.ontime.domain.cancelledBefore
 import fr.ontime.domain.reminderAt
 import androidx.glance.appwidget.updateAll
 import fr.ontime.app.data.LegacyTripMigration
@@ -78,6 +79,7 @@ private val RefreshEvery: Duration = Duration.ofSeconds(60)
 private enum class Screen(val title: String) {
     Home("Prochain départ"),
     Trips("Mes trajets"),
+    Settings("Paramètres"),
     About("À propos"),
 }
 
@@ -152,7 +154,9 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
                 if (homeState !is HomeState.Ready) homeState = HomeState.Loading
                 while (true) {
                     val update = withContext(Dispatchers.IO) { Transport.tripUpdate(applicationContext, trip) }
-                    homeState = update?.let { HomeState.Ready(it.selection, it.checkedAt) } ?: HomeState.NoKey
+                    homeState = update?.let {
+                        HomeState.Ready(it.selection, it.checkedAt, cancelledBefore(it.departures, it.selection.departure, it.checkedAt))
+                    } ?: HomeState.NoKey
                     delay(RefreshEvery.toMillis())
                 }
             }
@@ -239,6 +243,7 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
                         trainStops = sncf?.let(::SncfStops),
                         busStops = remember { AzurNetworkStops(Transport.lignesAzur(applicationContext), sncf) },
                     )
+                    Screen.Settings -> SettingsScreen()
                     Screen.About -> AboutScreen()
                 }
             }
