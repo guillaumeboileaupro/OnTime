@@ -49,6 +49,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import fr.ontime.app.data.SharedPreferencesProfileRepository
 import fr.ontime.app.data.TripLabels
+import fr.ontime.app.data.Transport
+import fr.ontime.app.data.SncfStops
+import fr.ontime.app.data.AzurNetworkStops
 import fr.ontime.app.data.sncf.SncfServices
 import fr.ontime.app.widget.TripWidget
 import android.Manifest
@@ -143,14 +146,13 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
 
     LaunchedEffect(trip, screen, refresh) {
         when {
-            sncf == null -> homeState = HomeState.NoKey
             trip == null -> homeState = HomeState.NoTrip
             screen != Screen.Home -> Unit
             else -> {
                 if (homeState !is HomeState.Ready) homeState = HomeState.Loading
                 while (true) {
-                    val update = withContext(Dispatchers.IO) { sncf.tripUpdate(trip) }
-                    homeState = HomeState.Ready(update.selection, update.checkedAt)
+                    val update = withContext(Dispatchers.IO) { Transport.tripUpdate(applicationContext, trip) }
+                    homeState = update?.let { HomeState.Ready(it.selection, it.checkedAt) } ?: HomeState.NoKey
                     delay(RefreshEvery.toMillis())
                 }
             }
@@ -229,7 +231,14 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
                             }
                         },
                     )
-                    Screen.Trips -> TripsScreen(profileRepository, labels, snapshot, { revision += 1 }, sncf)
+                    Screen.Trips -> TripsScreen(
+                        profileRepository,
+                        labels,
+                        snapshot,
+                        { revision += 1 },
+                        trainStops = sncf?.let(::SncfStops),
+                        busStops = remember { AzurNetworkStops(Transport.lignesAzur(applicationContext), sncf) },
+                    )
                     Screen.About -> AboutScreen()
                 }
             }

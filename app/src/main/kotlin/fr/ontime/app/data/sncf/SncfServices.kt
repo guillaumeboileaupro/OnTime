@@ -4,6 +4,7 @@ import fr.ontime.app.BuildConfig
 import fr.ontime.domain.Departure
 import fr.ontime.domain.RequestBudget
 import fr.ontime.domain.Selection
+import fr.ontime.domain.Status
 import fr.ontime.domain.TravelProfile
 import fr.ontime.domain.reachableDepartures
 import fr.ontime.domain.selectNextDeparture
@@ -35,20 +36,10 @@ class SncfServices private constructor(apiKey: String, private val clock: Clock)
     /** Blocking: call off the main thread. */
     fun tripUpdate(trip: TravelProfile, limit: Int = 3): TripUpdate {
         val fetched = departures.fetchTrip(trip.stopId, trip.destinationId)
-        val now = clock.instant()
-        val walking = Duration.ofMinutes(trip.walkingMinutes.toLong())
-        val margin = Duration.ofMinutes(trip.marginMinutes.toLong())
-        val selection = selectNextDeparture(fetched.departures, now, walking, margin, MAX_DATA_AGE, fetched.status)
-        val upcoming = if (selection.departure != null) {
-            reachableDepartures(fetched.departures, now, walking, margin, limit)
-        } else {
-            emptyList()
-        }
-        return TripUpdate(selection, upcoming, now, fetched.departures)
+        return buildTripUpdate(trip, fetched.status, fetched.departures, clock.instant(), limit)
     }
 
     companion object {
-        private val MAX_DATA_AGE: Duration = Duration.ofMinutes(3)
         private val quota = RequestBudget()
 
         @Volatile
@@ -62,4 +53,15 @@ class SncfServices private constructor(apiKey: String, private val clock: Clock)
             }
         }
     }
+}
+
+private val MAX_DATA_AGE: Duration = Duration.ofMinutes(3)
+
+/** Selection and reachable departures of [trip] from any provider's answer. */
+fun buildTripUpdate(trip: TravelProfile, status: Status, departures: List<Departure>, now: Instant, limit: Int = 3): TripUpdate {
+    val walking = Duration.ofMinutes(trip.walkingMinutes.toLong())
+    val margin = Duration.ofMinutes(trip.marginMinutes.toLong())
+    val selection = selectNextDeparture(departures, now, walking, margin, MAX_DATA_AGE, status)
+    val upcoming = if (selection.departure != null) reachableDepartures(departures, now, walking, margin, limit) else emptyList()
+    return TripUpdate(selection, upcoming, now, departures)
 }

@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import fr.ontime.app.data.SharedPreferencesProfileRepository
 import fr.ontime.app.data.TripLabels
-import fr.ontime.app.data.sncf.SncfServices
+import fr.ontime.app.data.Transport
 import fr.ontime.app.shortLabel
 import fr.ontime.domain.ProfileSnapshot
 import fr.ontime.domain.ReminderDecision
@@ -50,8 +50,7 @@ class ReminderReceiver : BroadcastReceiver() {
 
     private fun plan(context: Context, trip: TravelProfile, store: ReminderStore, scheduler: ReminderScheduler) {
         val window = store.window(trip.id) ?: return
-        val sncf = SncfServices.shared() ?: return
-        val update = sncf.tripUpdate(trip, limit = 5)
+        val update = Transport.tripUpdate(context, trip, limit = 5) ?: return
         val now = Instant.now()
         val chosen = if (update.selection.status == Status.Available) window.pickDeparture(update.upcoming, trip, ParisZone) else null
         if (chosen != null) {
@@ -77,7 +76,7 @@ class ReminderReceiver : BroadcastReceiver() {
             return
         }
         val label = TripLabels(context).get(trip.id)?.let(::shortLabel) ?: "Votre trajet"
-        val update = SncfServices.shared()?.tripUpdate(trip, limit = 5)
+        val update = Transport.tripUpdate(context, trip, limit = 5)
         val fetched = update?.takeIf { it.selection.status == Status.Available || it.selection.status == Status.Empty }
         val now = Instant.now()
         val notifier = DepartureNotifier(context)

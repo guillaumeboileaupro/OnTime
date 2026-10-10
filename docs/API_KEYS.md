@@ -21,8 +21,8 @@ Licence Ouverte 2.0.
   c'est le format le plus simple pour l'application, si l'acces est accorde.
 - Sinon, combiner GTFS-RT trip updates et GTFS statique (identifiants
   `trip_id`/`stop_id` a rapprocher).
-- Le tramway (lignes `L1`, `L2`, `L3` du GTFS) semble absent du temps reel :
-  l'etiqueter comme theorique.
+- Le tramway (`L1`, `L2`, `L3`) est bien present dans le GTFS-RT (verifie le
+  2026-10-10), avec des heures absolues par arret sur environ 5 h.
 - Metadonnees et historique : API sans cle
   `https://transport.data.gouv.fr/api/datasets/<id>` (champ `history`).
   URL stable du dernier GTFS :
@@ -31,6 +31,23 @@ Licence Ouverte 2.0.
   60 a 120 Mo decompresse, dont `stop_times.txt` (45 a 100 Mo). Ne pas le
   traiter en entier sur le telephone a chaque lancement : extraire une fois
   les arrets et lignes utiles, puis rafraichir rarement.
+
+### Integration dans l'appli (sans cle)
+
+- Catalogue des arrets : l'archive GTFS (8 Mo) est telechargee au plus une fois
+  par semaine; seul `stops.txt` (environ 300 Ko) est conserve dans les fichiers
+  de l'appli. Les quais sont regroupes par lieu (`parent_station`), identifiant
+  `lda:place_...` : un trajet A -> B vaut pour tous les quais et les deux sens.
+- Departs : flux GTFS-RT TripUpdates (environ 385 Ko), decode sans bibliotheque
+  protobuf, reutilise 30 s. Une course est retenue si elle passe a l'arret de
+  depart puis plus tard a la destination; arrets non desservis (`SKIPPED`)
+  ignores, courses annulees (`CANCELED`) marquees annulees.
+- Recherche d'arret par nom sur le telephone (accents et ponctuation ignores),
+  arret le plus proche a moins de 1,5 km; marche par l'itineraire pieton SNCF
+  si la cle existe, sinon estimation (ligne droite x 1,3 a 75 m/min).
+- Verifie sur donnees reelles (2026-10-10) : Massena -> Gare Thiers, tram L1
+  a 14:54, arrivee 14:58, puis 14:59.
+- Limite : horizon du flux d'environ 5 h; la nuit, aucun depart n'est propose.
 
 ## SNCF
 
