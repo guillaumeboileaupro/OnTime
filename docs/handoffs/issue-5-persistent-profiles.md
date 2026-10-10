@@ -4,7 +4,7 @@
   humaine ou Claude independante revendiquee.
 - Branche, base et HEAD : `feat/issue-5-persistent-profiles`, dependante de la
   PR #12 au SHA exact `4d9d347ea2884e29cb06ccb1d73c5cd9fc52179b`.
-  Implementation corrigee au SHA `95748cf`;
+  Implementation corrigee au SHA `9a8b16e`;
   le commit documentaire qui contient cette passation est le HEAD final reporte
   dans la description de PR.
 - PR et perimetre : `Refs #5`; profils sur fixtures uniquement, aucun merge,
@@ -62,7 +62,8 @@
   de bloquer les collisions d'ID a la creation et les selections orphelines, de
   refuser la coercition des durees et identites JSON et de rafraichir apres
   mutation persistante, puis de rejeter tout suffixe apres le document JSON.
-  Les seize retours sont corriges et testes; une derniere
+  Le controle du suffixe inspecte le texte brut et refuse aussi les commentaires
+  ignores par le parseur Android. Les dix-sept retours sont corriges et testes; une derniere
   revue vise le HEAD final. Une
   revue independante humaine/Claude reste a faire.
 - Prochaine action : Guillaume valide d'abord la PR #12, puis decide du rebasage

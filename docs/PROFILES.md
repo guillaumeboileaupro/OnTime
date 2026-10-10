@@ -53,7 +53,9 @@ emulateur ne remplace pas une observation apres arret force ou redemarrage d'un
 OPPO reel.
 
 Le document JSON doit etre entierement consomme; tout suffixe autre que des
-espaces est une erreur de stockage et reste preserve.
+espaces est une erreur de stockage et reste preserve. Cette verification porte
+sur le texte brut afin que les commentaires toleres par `JSONTokener` ne soient
+pas confondus avec des espaces.
 
 Les identifiants de profils persistes doivent etre uniques; un doublon est une
 erreur de stockage et le contenu d'origine est conserve. Une collision de l'ID
