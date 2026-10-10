@@ -21,6 +21,8 @@ import fr.ontime.domain.Quality
 import fr.ontime.domain.Selection
 import fr.ontime.domain.Status
 import fr.ontime.domain.TravelProfile
+import fr.ontime.domain.reminderAt
+import androidx.compose.material3.Button
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -43,6 +45,8 @@ fun HomeScreen(
     clock: Clock,
     onOpenTrips: () -> Unit,
     onRefresh: () -> Unit,
+    reminderNote: String? = null,
+    onRemind: ((Departure) -> Unit)? = null,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (trip != null) {
@@ -65,6 +69,16 @@ fun HomeScreen(
                 is HomeState.Ready -> SelectionContent(state.selection, requireNotNull(trip), clock)
             }
         }
+        val next = (state as? HomeState.Ready)?.selection?.departure
+        if (next != null && trip != null && onRemind != null) {
+            val remindAt = trip.reminderAt(next)
+            if (remindAt.isAfter(clock.instant())) {
+                Button(onClick = { onRemind(next) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    Text("Me prévenir à ${TimeFormat.format(remindAt)}", style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        }
+        reminderNote?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
         if (state is HomeState.Ready) {
             Text("Vérifié à ${TimeFormat.format(state.checkedAt)}", style = MaterialTheme.typography.labelMedium)
             OutlinedButton(onClick = onRefresh, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
