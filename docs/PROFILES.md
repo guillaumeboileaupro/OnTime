@@ -45,7 +45,9 @@ saisir de secret, d'adresse personnelle ou de trajet reel sensible.
 Le test instrumente recree le repository sur le meme stockage pour verifier la
 conservation, puis couvre modification, selection, suppression et stockage
 malforme, y compris un identifiant selectionne stocke avec un type invalide ou
-un profil JSON syntaxiquement valide mais hors contraintes du domaine. Un test sur
+un profil JSON syntaxiquement valide mais hors contraintes du domaine. Les
+durees doivent etre des entiers JSON exacts : aucune coercition de decimal ou de
+chaine numerique n'est acceptee. Un test sur
 emulateur ne remplace pas une observation apres arret force ou redemarrage d'un
 OPPO reel.
 
@@ -53,3 +55,6 @@ Les identifiants de profils persistes doivent etre uniques; un doublon est une
 erreur de stockage et le contenu d'origine est conserve. Une collision de l'ID
 genere a la creation est refusee avant ecriture. Un identifiant selectionne doit
 referencer un profil existant, sinon le stockage est signale invalide sans mutation.
+L'interface recharge toujours le snapshot apres une mutation persistante, meme
+si la selection qui suit echoue; elle evite cette seconde ecriture si le profil
+est deja selectionne.
