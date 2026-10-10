@@ -18,6 +18,13 @@ Voir [plan](docs/ANALYSE_ET_PLAN.md) et [audit amont](docs/AUDIT_AMONT.md).
 L'[audit cible de l'issue #1](docs/AUDIT_ISSUE_1.md) cartographie les frontieres
 actuelles et le plan des extractions progressives.
 
+## Application Android de demonstration
+
+La premiere application Compose fonctionne uniquement sur fixtures locales,
+clairement marquees comme demonstration. Elle expose les quatre etats du domaine
+sans API, widget ni notification. Les commandes, versions et limites sont dans
+le [guide Android](docs/ANDROID_BUILD.md).
+
 ## Logo
 
 Le PNG fourni est conserve sans modification. Le SVG contient ce meme PNG
