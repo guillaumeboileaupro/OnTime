@@ -179,10 +179,12 @@ private fun ReadyBody(content: WidgetContent.Ready, wide: Boolean) {
     val leave = content.trip.leaveAt(next)
     val large = LocalSize.current.height >= Large.height
     if (large) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Partir dans ", style = style(14))
-            Countdown(leave)
-            Text("  à ${TimeFormat.format(leave)}", style = style(16, bold = true))
+        Row(modifier = GlanceModifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = GlanceModifier.defaultWeight()) {
+                Text("Partir dans", style = style(14))
+                Countdown(leave, R.layout.widget_countdown_medium)
+            }
+            Text("à ${TimeFormat.format(leave)}", style = style(20, bold = true))
         }
         Spacer(GlanceModifier.height(6.dp))
         update.upcoming.forEach { departure -> DepartureRow(departure, content.trip) }
@@ -191,13 +193,19 @@ private fun ReadyBody(content: WidgetContent.Ready, wide: Boolean) {
         return
     }
     if (wide) {
-        // Launcher 4x2 cells can be barely 100 dp high: keep it to three short lines.
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Partir dans ", style = style(14))
-            Countdown(leave)
-            Text("  à ${TimeFormat.format(leave)}", style = style(16, bold = true))
+        // 4x2 cells are about 150 dp high on ColorOS: countdown left, details right.
+        Row(modifier = GlanceModifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = GlanceModifier.defaultWeight()) {
+                Text("Partir dans", style = style(14))
+                Countdown(leave, R.layout.widget_countdown_medium)
+            }
+            Column(modifier = GlanceModifier.defaultWeight()) {
+                Text("à ${TimeFormat.format(leave)}", style = style(18, bold = true))
+                val arrival = next.arrivalAt?.let { " → ${TimeFormat.format(it)}" } ?: ""
+                Text(modeBadge(next), style = style(13, bold = true), maxLines = 1)
+                Text("${TimeFormat.format(next.departureAt)}$arrival", style = style(14), maxLines = 1)
+            }
         }
-        DepartureRow(next, content.trip)
     } else {
         Countdown(leave)
         Text("partir à ${TimeFormat.format(leave)}", style = style(14, bold = true))
@@ -205,10 +213,10 @@ private fun ReadyBody(content: WidgetContent.Ready, wide: Boolean) {
 }
 
 @Composable
-private fun Countdown(leave: java.time.Instant) {
+private fun Countdown(leave: java.time.Instant, layout: Int = R.layout.widget_countdown) {
     val context = LocalContext.current
     AndroidRemoteViews(
-        RemoteViews(context.packageName, R.layout.widget_countdown).apply {
+        RemoteViews(context.packageName, layout).apply {
             val untilLeave = leave.toEpochMilli() - System.currentTimeMillis()
             setChronometer(R.id.countdown, SystemClock.elapsedRealtime() + untilLeave, null, true)
             setChronometerCountDown(R.id.countdown, true)
