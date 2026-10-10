@@ -130,6 +130,18 @@ class SharedPreferencesProfileRepositoryTest {
         assertEquals(numericString, preferences.getString("profiles", null))
     }
 
+    @Test
+    fun nonStringIdentityIsRejectedWithoutCoercion() {
+        val invalid = """[{"id":"bad","stopId":123,"lineId":"l","direction":"d","walkingMinutes":7,"marginMinutes":2}]"""
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        assertTrue(preferences.edit().putString("profiles", invalid).commit())
+        val repository = SharedPreferencesProfileRepository(context)
+
+        assertEquals(ProfileSnapshot.StorageError, repository.snapshot())
+        assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
+        assertEquals(invalid, preferences.getString("profiles", null))
+    }
+
     private fun draft(line: String) = ProfileDraft(
         stopId = "demo:stop",
         lineId = line,

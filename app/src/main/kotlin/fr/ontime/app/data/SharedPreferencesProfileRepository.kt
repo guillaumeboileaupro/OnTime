@@ -78,12 +78,12 @@ class SharedPreferencesProfileRepository(
             repeat(array.length()) { index ->
                 val item = array.getJSONObject(index)
                 val result = ProfileDraft(
-                        stopId = item.getString("stopId"),
-                        lineId = item.getString("lineId"),
-                        direction = item.getString("direction"),
+                        stopId = item.exactString("stopId"),
+                        lineId = item.exactString("lineId"),
+                        direction = item.exactString("direction"),
                         walkingMinutes = item.exactInt("walkingMinutes"),
                         marginMinutes = item.exactInt("marginMinutes"),
-                    ).toProfile(item.getString("id"))
+                    ).toProfile(item.exactString("id"))
                 require(result is ProfileChange.Success)
                 add(result.profile)
             }
@@ -97,6 +97,12 @@ class SharedPreferencesProfileRepository(
     private fun JSONObject.exactInt(key: String): Int {
         val value = get(key)
         require(value is Int)
+        return value
+    }
+
+    private fun JSONObject.exactString(key: String): String {
+        val value = get(key)
+        require(value is String)
         return value
     }
 
