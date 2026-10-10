@@ -47,4 +47,24 @@ class SncfTripParsingTest {
         )
         assertNull(parseRouteDirections("oops", "stop_area:A"))
     }
+
+    @Test
+    fun `shows a train listed twice only once`() {
+        val body = requireNotNull(javaClass.getResource("/sncf/journeys.json")).readText()
+        val root = org.json.JSONObject(body)
+        val journeys = root.getJSONArray("journeys")
+        journeys.put(org.json.JSONObject(journeys.getJSONObject(0).toString()))
+        assertEquals(1, parseSncfJourneys(root.toString(), "stop_area:DEMO:A", fetchedAt)?.size)
+    }
+
+    @Test
+    fun `resolves local times around the autumn clock change deterministically`() {
+        val body = requireNotNull(javaClass.getResource("/sncf/journeys.json")).readText()
+            .replace("20261010T122900", "20261025T023000")
+            .replace("20261010T125600", "20261025T040000")
+        val train = assertNotNull(parseSncfJourneys(body, "a", fetchedAt)).single()
+        // 02:30 occurs twice on 25 Oct 2026 in Paris: the earlier (summer, UTC+2) offset is used.
+        assertEquals(Instant.parse("2026-10-25T00:30:00Z"), train.departureAt)
+        assertEquals(Instant.parse("2026-10-25T03:00:00Z"), train.arrivalAt)
+    }
 }

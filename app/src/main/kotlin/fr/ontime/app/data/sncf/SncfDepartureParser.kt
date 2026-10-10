@@ -50,7 +50,7 @@ fun parseSncfDepartures(body: String, fetchedAt: Instant): List<Departure>? = ru
                 ),
             )
         }
-    }
+    }.distinctBy { it.journeyId } // a train listed twice is shown once
 }.getOrNull()
 
 /**
@@ -87,7 +87,7 @@ fun parseSncfJourneys(body: String, originStopAreaId: String, fetchedAt: Instant
                 ),
             )
         }
-    }
+    }.distinctBy { it.journeyId } // a train listed twice is shown once
 }.getOrNull()
 
 private fun localInstant(value: String, zone: ZoneId): Instant =
