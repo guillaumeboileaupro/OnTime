@@ -31,6 +31,7 @@ class FixtureDepartureRepository(
                         journeyId = "demo-course-0842",
                         stopId = "demo:stop:central",
                         lineId = "demo:line:a",
+                        directionId = "demo:direction:outbound",
                         destination = "Destination de démonstration",
                         mode = Mode.Rer,
                         departureAt = now.plusSeconds(12 * 60),

@@ -11,6 +11,7 @@ data class Departure(
     val journeyId: String,
     val stopId: String,
     val lineId: String,
+    val directionId: String,
     val destination: String,
     val mode: Mode,
     val departureAt: Instant,

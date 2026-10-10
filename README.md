@@ -25,6 +25,10 @@ clairement marquees comme demonstration. Elle expose les quatre etats du domaine
 sans API, widget ni notification. Les commandes, versions et limites sont dans
 le [guide Android](docs/ANDROID_BUILD.md).
 
+Les [profils locaux](docs/PROFILES.md) permettent de conserver arrêt, ligne,
+direction, marche et marge, puis de calculer l'heure de départ de chez soi sur
+les fixtures de démonstration.
+
 ## Logo
 
 Le PNG fourni est conserve sans modification. Le SVG contient ce meme PNG

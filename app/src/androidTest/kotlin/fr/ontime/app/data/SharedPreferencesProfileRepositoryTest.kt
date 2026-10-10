@@ -1,0 +1,186 @@
+package fr.ontime.app.data
+
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import fr.ontime.domain.ProfileChange
+import fr.ontime.domain.ProfileDraft
+import fr.ontime.domain.ProfileCommandResult
+import fr.ontime.domain.ProfileSnapshot
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+
+@RunWith(AndroidJUnit4::class)
+class SharedPreferencesProfileRepositoryTest {
+    private val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+
+    @Before
+    @After
+    fun clearStorage() {
+        context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+            .edit().clear().commit()
+    }
+
+    @Test
+    fun createsUpdatesSelectsDeletesAndSurvivesRepositoryRestart() {
+        val ids = listOf("profile-1", "profile-2").iterator()
+        val firstRepository = SharedPreferencesProfileRepository(context) { ids.next() }
+        assertTrue(firstRepository.create(draft("A")) is ProfileChange.Success)
+        assertTrue(firstRepository.create(draft("B")) is ProfileChange.Success)
+        assertEquals(ProfileCommandResult.Success, firstRepository.select("profile-2"))
+
+        val restarted = SharedPreferencesProfileRepository(context)
+        val restartedSnapshot = restarted.snapshot() as ProfileSnapshot.Data
+        assertEquals(listOf("profile-1", "profile-2"), restartedSnapshot.profiles.map { it.id })
+        assertEquals("profile-2", restartedSnapshot.selectedProfileId)
+        assertTrue(restarted.update("profile-2", draft("C")) is ProfileChange.Success)
+
+        val restartedAgain = SharedPreferencesProfileRepository(context)
+        assertEquals("C", (restartedAgain.snapshot() as ProfileSnapshot.Data).profiles.last().lineId)
+        assertEquals(ProfileCommandResult.Success, restartedAgain.delete("profile-2"))
+        assertEquals("profile-1", (restartedAgain.snapshot() as ProfileSnapshot.Data).selectedProfileId)
+        assertEquals(ProfileCommandResult.NotFound, restartedAgain.select("missing"))
+    }
+
+    @Test
+    fun malformedStorageIsReportedAndNeverOverwrittenAsEmpty() {
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        assertTrue(preferences.edit().putString("profiles", "not-json").commit())
+        val repository = SharedPreferencesProfileRepository(context) { "profile-1" }
+
+        assertEquals(ProfileSnapshot.StorageError, repository.snapshot())
+        assertEquals(ProfileChange.StorageError, repository.create(draft("A")))
+        assertEquals("not-json", preferences.getString("profiles", null))
+    }
+
+    @Test
+    fun malformedSelectedIdTypeIsReportedWithoutCrashing() {
+        val repository = SharedPreferencesProfileRepository(context) { "profile-1" }
+        assertTrue(repository.create(draft("A")) is ProfileChange.Success)
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        assertTrue(preferences.edit().putInt(SharedPreferencesProfileRepository.KEY_SELECTED, 42).commit())
+
+        assertEquals(ProfileSnapshot.StorageError, repository.snapshot())
+        assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
+    }
+
+    @Test
+    fun validJsonWithInvalidDomainValuesIsReportedAndPreserved() {
+        val invalid = """[{"id":"bad","stopId":"demo:stop","lineId":"A","direction":"out","walkingMinutes":-20,"marginMinutes":2}]"""
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        assertTrue(preferences.edit().putString("profiles", invalid).commit())
+        val repository = SharedPreferencesProfileRepository(context) { "profile-1" }
+
+        assertEquals(ProfileSnapshot.StorageError, repository.snapshot())
+        assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
+        assertEquals(invalid, preferences.getString("profiles", null))
+    }
+
+    @Test
+    fun duplicateProfileIdsAreReportedAndPreserved() {
+        val duplicate = """[{"id":"same","stopId":"s1","lineId":"l1","direction":"d1","walkingMinutes":1,"marginMinutes":1},{"id":"same","stopId":"s2","lineId":"l2","direction":"d2","walkingMinutes":2,"marginMinutes":2}]"""
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        assertTrue(preferences.edit().putString("profiles", duplicate).commit())
+        val repository = SharedPreferencesProfileRepository(context) { "profile-1" }
+
+        assertEquals(ProfileSnapshot.StorageError, repository.snapshot())
+        assertEquals(ProfileCommandResult.StorageError, repository.delete("same"))
+        assertEquals(duplicate, preferences.getString("profiles", null))
+    }
+
+    @Test
+    fun generatedIdCollisionIsRejectedWithoutCorruptingStorage() {
+        val repository = SharedPreferencesProfileRepository(context) { "same" }
+        assertTrue(repository.create(draft("A")) is ProfileChange.Success)
+
+        assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
+        val snapshot = repository.snapshot() as ProfileSnapshot.Data
+        assertEquals(listOf("A"), snapshot.profiles.map { it.lineId })
+    }
+
+    @Test
+    fun danglingSelectedIdIsReportedAndPreserved() {
+        val repository = SharedPreferencesProfileRepository(context) { "profile-1" }
+        assertTrue(repository.create(draft("A")) is ProfileChange.Success)
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        assertTrue(
+            preferences.edit()
+                .putString(SharedPreferencesProfileRepository.KEY_SELECTED, "missing")
+                .commit(),
+        )
+
+        assertEquals(ProfileSnapshot.StorageError, repository.snapshot())
+        assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
+        assertEquals("missing", preferences.getString(SharedPreferencesProfileRepository.KEY_SELECTED, null))
+    }
+
+    @Test
+    fun fractionalOrStringDurationsAreRejectedWithoutCoercion() {
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        val fractional = """[{"id":"bad","stopId":"s","lineId":"l","direction":"d","walkingMinutes":-0.5,"marginMinutes":2}]"""
+        assertTrue(preferences.edit().putString("profiles", fractional).commit())
+        assertEquals(ProfileSnapshot.StorageError, SharedPreferencesProfileRepository(context).snapshot())
+
+        val numericString = """[{"id":"bad","stopId":"s","lineId":"l","direction":"d","walkingMinutes":"7","marginMinutes":2}]"""
+        assertTrue(preferences.edit().putString("profiles", numericString).commit())
+        assertEquals(ProfileSnapshot.StorageError, SharedPreferencesProfileRepository(context).snapshot())
+        assertEquals(numericString, preferences.getString("profiles", null))
+    }
+
+    @Test
+    fun nonStringIdentityIsRejectedWithoutCoercion() {
+        val invalid = """[{"id":"bad","stopId":123,"lineId":"l","direction":"d","walkingMinutes":7,"marginMinutes":2}]"""
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        assertTrue(preferences.edit().putString("profiles", invalid).commit())
+        val repository = SharedPreferencesProfileRepository(context)
+
+        assertEquals(ProfileSnapshot.StorageError, repository.snapshot())
+        assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
+        assertEquals(invalid, preferences.getString("profiles", null))
+    }
+
+    @Test
+    fun trailingJsonContentIsRejectedAndPreserved() {
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        listOf("[]garbage", "[]/*garbage*/", "[]//garbage").forEach { invalid ->
+            assertTrue(preferences.edit().putString("profiles", invalid).commit())
+            val repository = SharedPreferencesProfileRepository(context)
+
+            assertEquals(ProfileSnapshot.StorageError, repository.snapshot())
+            assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
+            assertEquals(invalid, preferences.getString("profiles", null))
+        }
+    }
+
+    @Test
+    fun nonCanonicalJsonIsRejectedAndPreserved() {
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        val fields = "\"stopId\":\"s\",\"lineId\":\"l\",\"direction\":\"d\",\"walkingMinutes\":7,\"marginMinutes\":2"
+        listOf(
+            "[{id:\"p\",$fields}]",
+            "[{'id':'p',$fields}]",
+            "[{\"id\":\"p\",/*c*/$fields}]",
+            "[{\"id\":\"p\",$fields,\"extra\":1}]",
+            "[{\"id\":\"x\",\"id\":\"p\",$fields}]",
+            " [] ",
+        ).forEach { invalid ->
+            assertTrue(preferences.edit().putString("profiles", invalid).commit())
+            val repository = SharedPreferencesProfileRepository(context)
+
+            assertEquals(invalid, ProfileSnapshot.StorageError, repository.snapshot())
+            assertEquals(ProfileChange.StorageError, repository.create(draft("B")))
+            assertEquals(invalid, preferences.getString("profiles", null))
+        }
+    }
+
+    private fun draft(line: String) = ProfileDraft(
+        stopId = "demo:stop",
+        lineId = line,
+        direction = "Direction fictive",
+        walkingMinutes = 7,
+        marginMinutes = 2,
+    )
+}

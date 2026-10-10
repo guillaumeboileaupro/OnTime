@@ -16,7 +16,10 @@
 - [x] Issue #3 : initialiser Android Kotlin/Compose et construire un APK debug
   sur fixtures, avec domaine Kotlin pur et quatre etats visibles.
 - [ ] Integrer PRIM et une gare SNCF avec couverture et quotas verifies.
-- [ ] Profils/favoris et UI e-paper accessible, persistance et mode hors ligne.
+- [x] Issue #5 : profils locaux persistants avec CRUD, selection, validation et
+  calcul du depart de chez soi sur fixtures.
+- [ ] Issue #5 : favoris fournisseurs, revue accessibilite sur appareil et mode
+  hors ligne avec donnees transport reelles.
 - [ ] Widget Glance, instances independantes et fraicheur visible.
 - [ ] Rappels, permissions, annulation/dedup et observation sur OPPO reel.
 - [x] Issue #8 : premiere CI C++ portable sur PR et push vers `main`.
