@@ -89,6 +89,7 @@ class SharedPreferencesProfileRepository(
         }
         val selected = preferences.getString(KEY_SELECTED, null)
             ?.takeIf { id -> profiles.any { it.id == id } }
+        require(profiles.map { it.id }.distinct().size == profiles.size)
         ProfileSnapshot.Data(profiles, selected)
     }.getOrNull()
 

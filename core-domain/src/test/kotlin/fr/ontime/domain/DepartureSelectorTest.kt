@@ -98,6 +98,13 @@ class DepartureSelectorTest {
         assertEquals(
             Status.Error,
             selectNextDeparture(
+                listOf(departure("invalid-direction", 300).copy(directionId = "")), now,
+                Duration.ZERO, Duration.ZERO, Duration.ofSeconds(120),
+            ).status,
+        )
+        assertEquals(
+            Status.Error,
+            selectNextDeparture(
                 listOf(departure("invalid-departure", 300).copy(departureAt = Instant.ofEpochSecond(-1))),
                 now, Duration.ZERO, Duration.ZERO, Duration.ofSeconds(120),
             ).status,

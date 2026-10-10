@@ -43,7 +43,7 @@ fun selectNextDeparture(
 
 private fun Departure.isValid(): Boolean =
     provider.isNotBlank() && journeyId.isNotBlank() && stopId.isNotBlank() &&
-        lineId.isNotBlank() && destination.isNotBlank() &&
+        lineId.isNotBlank() && directionId.isNotBlank() && destination.isNotBlank() &&
         !departureAt.isBefore(Instant.EPOCH) && !fetchedAt.isBefore(Instant.EPOCH)
 
 private fun Departure.isRecommendable(

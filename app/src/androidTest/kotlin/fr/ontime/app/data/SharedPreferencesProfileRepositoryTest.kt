@@ -79,6 +79,18 @@ class SharedPreferencesProfileRepositoryTest {
         assertEquals(invalid, preferences.getString("profiles", null))
     }
 
+    @Test
+    fun duplicateProfileIdsAreReportedAndPreserved() {
+        val duplicate = """[{"id":"same","stopId":"s1","lineId":"l1","direction":"d1","walkingMinutes":1,"marginMinutes":1},{"id":"same","stopId":"s2","lineId":"l2","direction":"d2","walkingMinutes":2,"marginMinutes":2}]"""
+        val preferences = context.getSharedPreferences(SharedPreferencesProfileRepository.FILE_NAME, 0)
+        assertTrue(preferences.edit().putString("profiles", duplicate).commit())
+        val repository = SharedPreferencesProfileRepository(context) { "profile-1" }
+
+        assertEquals(ProfileSnapshot.StorageError, repository.snapshot())
+        assertEquals(ProfileCommandResult.StorageError, repository.delete("same"))
+        assertEquals(duplicate, preferences.getString("profiles", null))
+    }
+
     private fun draft(line: String) = ProfileDraft(
         stopId = "demo:stop",
         lineId = line,
