@@ -70,6 +70,23 @@ class HomeScreenTest {
     }
 
     @Test
+    fun keepsATooTightTrainVisibleWithoutCallingItCancelled() {
+        // Issue 26: the 08:35 train leaves before 7+2 min would get us there, yet it still runs.
+        val tight = departure.copy(journeyId = "journey:TEST:0", departureAt = Instant.parse("2026-10-09T06:35:00Z"))
+        composeRule.setContent {
+            OnTimeTheme {
+                HomeScreen(
+                    HomeState.Ready(Selection(Status.Available, departure), clock.instant(), tight = listOf(tight)),
+                    trip, null, clock, {}, {},
+                )
+            }
+        }
+        composeRule.onNodeWithText("Train de 08:35 : trop juste", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText("supprimé", substring = true).assertDoesNotExist()
+        composeRule.onNodeWithText("Train de 08:42, arrivée 09:09").assertIsDisplayed()
+    }
+
+    @Test
     fun explainsEveryOtherStateWithoutTechnicalWords() {
         var state by mutableStateOf<HomeState>(HomeState.NoTrip)
         composeRule.setContent { OnTimeTheme { HomeScreen(state, trip.takeIf { state is HomeState.Ready }, null, clock, {}, {}) } }

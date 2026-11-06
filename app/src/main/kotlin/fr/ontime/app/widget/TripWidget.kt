@@ -127,11 +127,12 @@ class TripWidget : GlanceAppWidget() {
                 options = DisplaySettings(context).read(),
             )
         }
-        // Refresh just after the shown leave time so the widget moves to the next train.
+        // Refresh just after the shown leave time so the widget moves to the next train,
+        // or just after a "too tight" train leaves so it is not shown once gone.
         (content as? WidgetContent.Ready)?.let { ready ->
-            ready.update.upcoming.firstOrNull()?.let { next ->
-                WidgetRefreshAlarm.schedule(context, ready.trip.leaveAt(next).plusSeconds(60))
-            }
+            val leaveNext = ready.update.upcoming.firstOrNull()?.let { ready.trip.leaveAt(it) }
+            val tightGone = ready.update.tight.firstOrNull()?.departureAt
+            listOfNotNull(leaveNext, tightGone).minOrNull()?.let { WidgetRefreshAlarm.schedule(context, it.plusSeconds(60)) }
         }
         return content
     }
@@ -251,6 +252,14 @@ private fun ReadyBody(content: WidgetContent.Ready, wide: Boolean) {
     val update = content.update
     val options = content.options
     val next = update.upcoming.firstOrNull()
+    val tight = update.tight.firstOrNull()
+    if (update.selection.status == Status.Empty && tight != null) {
+        // Nothing reachable from home, but a train still leaves: keep it visible.
+        Text("Prochain départ", style = style(14))
+        Text(TimeFormat.format(tight.departureAt), style = style(32, bold = true))
+        Text("⚡ trop juste depuis chez soi", style = style(14, bold = true), maxLines = 1)
+        return
+    }
     if (update.selection.status != Status.Available || next == null) {
         Message(
             when (update.selection.status) {
@@ -276,8 +285,10 @@ private fun ReadyBody(content: WidgetContent.Ready, wide: Boolean) {
             } else {
                 emptyList()
             }
-            val rows = (update.upcoming + cancelled).sortedBy { it.departureAt }
-            rows.take(4).forEach { departure -> DepartureRow(departure, content.trip, options.leaveTime) }
+            val rows = (update.upcoming + cancelled + update.tight).sortedBy { it.departureAt }
+            rows.take(4).forEach { departure ->
+                DepartureRow(departure, content.trip, options.leaveTime, tight = departure in update.tight)
+            }
             Spacer(GlanceModifier.height(4.dp))
             Text("Vérifié à ${TimeFormat.format(update.checkedAt)}", style = style(14))
         }
@@ -301,12 +312,17 @@ private fun ReadyBody(content: WidgetContent.Ready, wide: Boolean) {
                         Text("⚠ ${TimeFormat.format(it.departureAt)} supprimé", style = style(14, bold = true), maxLines = 1)
                     }
                 }
+                val cancelledShown = options.cancelled && cancelledBefore(update.departures, next, update.checkedAt).isNotEmpty()
+                if (!cancelledShown) tight?.let { TightNote(it) }
             }
         }
         else -> {
             Headline(next, leave, options, side = false)
+            // 2x2 has room for one extra line: the leave time, else a train too tight from home.
             if (options.countdown && options.leaveTime) {
                 Text("partir à ${TimeFormat.format(leave)}", style = style(14, bold = true))
+            } else {
+                tight?.let { TightNote(it) }
             }
         }
     }
@@ -357,7 +373,7 @@ private fun Countdown(leave: java.time.Instant, layout: Int = R.layout.widget_co
 
 /** One board line: transport badge, departure -> arrival, when to leave home, and any delay below. */
 @Composable
-private fun DepartureRow(departure: Departure, trip: TravelProfile, showLeave: Boolean) {
+private fun DepartureRow(departure: Departure, trip: TravelProfile, showLeave: Boolean, tight: Boolean = false) {
     Column(modifier = GlanceModifier.fillMaxWidth().padding(vertical = 3.dp)) {
         Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -382,7 +398,11 @@ private fun DepartureRow(departure: Departure, trip: TravelProfile, showLeave: B
                     maxLines = 1,
                     modifier = GlanceModifier.defaultWeight(),
                 )
-                if (showLeave) Text("partir ${TimeFormat.format(trip.leaveAt(departure))}", style = style(14), maxLines = 1)
+                when {
+                    // Still running, only too soon to make it from home: not a cancellation.
+                    tight -> Text("⚡ juste", style = style(14, bold = true), maxLines = 1)
+                    showLeave -> Text("partir ${TimeFormat.format(trip.leaveAt(departure))}", style = style(14), maxLines = 1)
+                }
             }
         }
     }
@@ -405,6 +425,12 @@ internal fun modeBadge(departure: Departure): String {
     val mode = modeLabel(departure.mode).uppercase()
     val line = departure.lineId.takeIf { it.length <= 4 }
     return if (line != null) "$mode $line" else mode
+}
+
+/** One line for a train still leaving but too soon to catch from home. */
+@Composable
+private fun TightNote(departure: Departure) {
+    Text("⚡ ${TimeFormat.format(departure.departureAt)} trop juste", style = style(14, bold = true), maxLines = 1)
 }
 
 @Composable
