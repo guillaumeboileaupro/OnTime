@@ -44,6 +44,8 @@ sealed interface HomeState {
         val checkedAt: Instant,
         /** Cancelled departures before the recommended one, to warn about. */
         val cancelled: List<Departure> = emptyList(),
+        /** Departures still leaving but too soon to make it from home (catchable if already on the way). */
+        val tight: List<Departure> = emptyList(),
     ) : HomeState
 }
 
@@ -79,6 +81,7 @@ fun HomeScreen(
                 HomeState.Loading -> StateCard("Recherche des horaires…", "Interrogation de la SNCF en cours.")
                 is HomeState.Ready -> {
                     state.cancelled.forEach { CancelledLine(it) }
+                    state.tight.filterNot { it.departureAt.isBefore(clock.instant()) }.forEach { TightLine(it) }
                     SelectionContent(state.selection, requireNotNull(trip), clock, options)
                 }
             }
@@ -170,6 +173,16 @@ private fun CancelledLine(departure: Departure) {
     Text(
         "⚠ ${modeLabel(departure.mode)} de ${TimeFormat.format(departure.departureAt)} supprimé" +
             (departure.disruption?.let { " ($it)" } ?: ""),
+        style = MaterialTheme.typography.titleMedium,
+    )
+}
+
+/** A train that still runs but cannot be reached from home in time: never presented as cancelled. */
+@Composable
+private fun TightLine(departure: Departure) {
+    Text(
+        "⚡ ${modeLabel(departure.mode)} de ${TimeFormat.format(departure.departureAt)} : trop juste depuis chez vous, " +
+            "encore possible si vous êtes déjà en route",
         style = MaterialTheme.typography.titleMedium,
     )
 }

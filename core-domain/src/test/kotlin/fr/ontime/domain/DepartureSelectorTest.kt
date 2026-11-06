@@ -171,4 +171,50 @@ class DepartureSelectorTest {
         val next = departure("next", 600)
         assertEquals(listOf(cancelled), cancelledBefore(listOf(laterCancelled, next, cancelled), next, now))
     }
+
+    @Test
+    fun `keeps a train visible as tight around the leave threshold until it departs`() {
+        // Issue 26: 10 min walk, no margin, train at +20 min; the threshold is +10 min.
+        val walking = Duration.ofMinutes(10)
+        val maxAge = Duration.ofMinutes(3)
+        fun at(minutesFromStart: Long): Pair<Instant, Departure> {
+            val t = now.plusSeconds(minutesFromStart * 60)
+            return t to departure("train", 20 * 60).copy(fetchedAt = t.minusSeconds(20))
+        }
+        // Before the threshold: reachable and recommended, not tight.
+        at(5).let { (t, d) ->
+            assertSame(d, selectNextDeparture(listOf(d), t, walking, Duration.ZERO, maxAge).departure)
+            assertEquals(emptyList(), tightDepartures(listOf(d), t, walking, Duration.ZERO, maxAge))
+        }
+        // Exactly at the threshold: still reachable.
+        at(10).let { (t, d) ->
+            assertSame(d, selectNextDeparture(listOf(d), t, walking, Duration.ZERO, maxAge).departure)
+            assertEquals(emptyList(), tightDepartures(listOf(d), t, walking, Duration.ZERO, maxAge))
+        }
+        // After the threshold and up to departure: no longer recommended but still listed.
+        listOf(11L, 15L, 20L).forEach { minute ->
+            val (t, d) = at(minute)
+            assertNull(selectNextDeparture(listOf(d), t, walking, Duration.ZERO, maxAge).departure)
+            assertEquals(listOf(d), tightDepartures(listOf(d), t, walking, Duration.ZERO, maxAge))
+        }
+        // Once departed it is gone.
+        at(21).let { (t, d) -> assertEquals(emptyList(), tightDepartures(listOf(d), t, walking, Duration.ZERO, maxAge)) }
+    }
+
+    @Test
+    fun `tight departures exclude cancelled estimated stale and reachable ones`() {
+        val result = tightDepartures(
+            listOf(
+                departure("second", 200),
+                departure("cancelled", 100, cancelled = true),
+                departure("estimated", 100, quality = Quality.Estimated),
+                departure("stale", 100, fetchedSecondsAgo = 400),
+                departure("first", 50),
+                departure("reachable", 600),
+                departure("gone", -5),
+            ),
+            now, Duration.ofSeconds(240), Duration.ofSeconds(60), Duration.ofSeconds(120),
+        )
+        assertEquals(listOf("first", "second"), result.map { it.journeyId })
+    }
 }

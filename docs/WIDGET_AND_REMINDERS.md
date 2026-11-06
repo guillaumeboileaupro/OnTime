@@ -16,6 +16,10 @@ BUS 12, depart -> arrivee, retard « +N », heure de quitter la maison).
 Configuration facultative : sans choix, le widget suit le trajet de l'accueil.
 Parametres (menu) : compte a rebours, heure de depart de chez soi, trains
 supprimes (desactive par defaut sur le widget; l'accueil les signale toujours).
+Un train trop juste depuis chez soi (issue #26) reste visible jusqu'a son depart :
+ligne « ⚡ juste » dans le tableau 4x3, ligne « ⚡ HH:mm trop juste » en 4x2/2x2
+quand la place le permet, et en titre si plus aucun train n'est atteignable. Le
+widget se rafraichit juste apres ce depart. Les rappels l'ignorent.
 
 ## Rappels (issue #7)
 

@@ -154,7 +154,12 @@ fun OnTimeApp(clock: Clock = Clock.systemUTC()) {
                 while (true) {
                     val update = withContext(Dispatchers.IO) { Transport.tripUpdate(applicationContext, trip) }
                     homeState = update?.let {
-                        HomeState.Ready(it.selection, it.checkedAt, cancelledBefore(it.departures, it.selection.departure, it.checkedAt))
+                        HomeState.Ready(
+                            it.selection,
+                            it.checkedAt,
+                            cancelledBefore(it.departures, it.selection.departure, it.checkedAt),
+                            it.tight,
+                        )
                     } ?: HomeState.NoKey
                     delay(RefreshEvery.toMillis())
                 }

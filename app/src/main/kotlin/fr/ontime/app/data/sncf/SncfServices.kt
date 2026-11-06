@@ -8,19 +8,22 @@ import fr.ontime.domain.Status
 import fr.ontime.domain.TravelProfile
 import fr.ontime.domain.reachableDepartures
 import fr.ontime.domain.selectNextDeparture
+import fr.ontime.domain.tightDepartures
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 
 /**
  * Result of one refresh for a trip, shared by the home screen, widgets and
- * reminders: [departures] is everything fetched, [upcoming] what is still reachable.
+ * reminders: [departures] is everything fetched, [upcoming] what is still reachable
+ * from home, [tight] what still leaves but too soon to make it from home.
  */
 data class TripUpdate(
     val selection: Selection,
     val upcoming: List<Departure>,
     val checkedAt: Instant,
     val departures: List<Departure> = emptyList(),
+    val tight: List<Departure> = emptyList(),
 )
 
 /**
@@ -63,5 +66,7 @@ fun buildTripUpdate(trip: TravelProfile, status: Status, departures: List<Depart
     val margin = Duration.ofMinutes(trip.marginMinutes.toLong())
     val selection = selectNextDeparture(departures, now, walking, margin, MAX_DATA_AGE, status)
     val upcoming = if (selection.departure != null) reachableDepartures(departures, now, walking, margin, limit) else emptyList()
-    return TripUpdate(selection, upcoming, now, departures)
+    val usable = selection.status == Status.Available || selection.status == Status.Empty
+    val tight = if (usable) tightDepartures(departures, now, walking, margin, MAX_DATA_AGE) else emptyList()
+    return TripUpdate(selection, upcoming, now, departures, tight)
 }

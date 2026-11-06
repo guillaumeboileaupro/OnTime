@@ -32,6 +32,12 @@ marche et la marge du profil placeraient deja le depart maison dans le passe.
 La direction est un identifiant stable, obligatoire et doit elle aussi
 correspondre au depart.
 
+Un train encore annonce mais parti avant `maintenant + marche + marge` n'est plus
+recommande (ni rappel ni compte a rebours) mais reste affiche jusqu'a son depart
+comme « trop juste depuis chez vous » (issue #26, `tightDepartures`) : il est
+encore prenable par une personne deja en route. Cette mention est distincte d'une
+suppression et n'est construite qu'a partir de donnees fraiches `Available`/`Empty`.
+
 ## Persistance et confidentialite
 
 `SharedPreferencesProfileRepository` est l'adaptateur Android. Il conserve la

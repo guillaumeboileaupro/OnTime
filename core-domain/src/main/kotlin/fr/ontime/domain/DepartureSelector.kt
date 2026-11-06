@@ -56,6 +56,27 @@ fun reachableDepartures(
     .sortedBy { it.departureAt }
     .take(limit)
 
+/**
+ * Departures still timetabled but leaving before walking and margin would get
+ * someone from home to the stop: they stay catchable for a person already on the
+ * way, so they are shown until they leave instead of vanishing (they are never
+ * recommended nor used for reminders). Earliest first, fresh data only.
+ */
+fun tightDepartures(
+    departures: List<Departure>,
+    now: Instant,
+    walking: Duration,
+    margin: Duration,
+    maxAge: Duration,
+): List<Departure> = departures
+    .filter {
+        it.isValid() && !it.cancelled && it.quality != Quality.Estimated &&
+            !it.departureAt.isBefore(now) && !it.fetchedAt.isAfter(now) &&
+            Duration.between(it.fetchedAt, now) <= maxAge &&
+            !it.isRecommendable(now, walking, margin)
+    }
+    .sortedBy { it.departureAt }
+
 private fun Departure.isValid(): Boolean =
     provider.isNotBlank() && journeyId.isNotBlank() && stopId.isNotBlank() &&
         lineId.isNotBlank() && directionId.isNotBlank() && destination.isNotBlank() &&
